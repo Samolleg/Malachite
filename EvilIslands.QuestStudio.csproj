@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Malachite.QuestStudio</AssemblyName>
+    <RootNamespace>QuestStudio</RootNamespace>
+    <Product>Малахит · Мастерская квестов</Product>
+    <Version>0.3.1</Version>
+    <StartupObject>QuestStudio.Program</StartupObject>
+  </PropertyGroup>
+  <ItemGroup><Compile Remove="modules/**/*.cs;tests/**/*.cs"/><Page Remove="modules/**/*.xaml;tests/**/*.xaml"/><EmbeddedResource Remove="modules/**/*;tests/**/*"/></ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Data/commands.json" />
+    <EmbeddedResource Include="Data/help.tsv" />
+    <EmbeddedResource Include="Data/addon.json" />
+    <EmbeddedResource Include="Data/addon-help.tsv" />
+  </ItemGroup>
+</Project>

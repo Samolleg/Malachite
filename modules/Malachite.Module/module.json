@@ -1,0 +1,5 @@
+{
+  "moduleId": "malachite", "version": "0.4.0", "entryAssembly": "Malachite.Module.dll", "entryType": "Malachite.Module.Entry",
+  "contractMajor": 1, "contractMinor": 0, "requiredCapabilities": ["workspace.read.v1", "navigation.record.v1", "files.export-copy.v1", "documents.session.v1", "transactions.v1", "saves.artifact-kind.v1"],
+  "optionalCapabilities": ["files.browse-folder.v1"], "runtime": "net9.0-windows", "architecture": "any", "stateFormatVersion": 2
+}

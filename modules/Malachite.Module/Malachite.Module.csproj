@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net9.0-windows</TargetFramework><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><Version>0.4.0</Version><EnableDynamicLoading>true</EnableDynamicLoading></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Malachite.UI.Wpf/Malachite.UI.Wpf.csproj"/>
+    <Reference Include="ModuleContracts.V1"><HintPath>$(ModuleSdkDir)/ModuleContracts.V1.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="ModuleContracts.Wpf.V1"><HintPath>$(ModuleSdkDir)/ModuleContracts.Wpf.V1.dll</HintPath><Private>false</Private></Reference>
+    <Content Include="module.json" CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
+</Project>

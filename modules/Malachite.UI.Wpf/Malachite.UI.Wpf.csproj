@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework><UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><Version>0.4.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Malachite.Core/Malachite.Core.csproj"/>
+    <Reference Include="ModuleContracts.V1"><HintPath>$(ModuleSdkDir)/ModuleContracts.V1.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="ModuleContracts.Wpf.V1"><HintPath>$(ModuleSdkDir)/ModuleContracts.Wpf.V1.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <Target Name="CheckModuleSdk" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(ModuleSdkDir)/ModuleContracts.Wpf.V1.dll')" Text="Pass -p:ModuleSdkDir=absolute-path-to-host-SDK. Building the editor is not required."/>
+  </Target>
+</Project>

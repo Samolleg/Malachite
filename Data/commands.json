@@ -1,0 +1,5031 @@
+{
+  "title": "Штатные MOB-команды: проверенная таблица игрового движка",
+  "date": "2026-09-16",
+  "scope": "native executable token table, before addon extensions",
+  "counts": {
+    "procedures": 145,
+    "functions": 69,
+    "callables": 214,
+    "grammar_entries": 11
+  },
+  "verification": "225 native records match reference name and signature descriptors; individual handlers not gameplay-tested",
+  "notation": "argument names are positional placeholders; descriptor return prefix exists only for functions",
+  "grammar": [
+    "(",
+    ")",
+    ",",
+    ":",
+    "=",
+    "WorldScript",
+    "Script",
+    "DeclareScript",
+    "GlobalVars",
+    "if",
+    "then"
+  ],
+  "commands": [
+    {
+      "name": "ActivateTrap",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "ActivateTrap(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AddLoot",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AddLoot(arg1: float, arg2: string, arg3: string)",
+      "descriptor": "fss",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AddRectToArea",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AddRectToArea(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float)",
+      "descriptor": "fffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AddRoundToArea",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AddRoundToArea(arg1: float, arg2: float, arg3: float, arg4: float)",
+      "descriptor": "ffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AddMob",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AddMob(arg1: string)",
+      "descriptor": "s",
+      "note": "Подключение дополнительного MOB; не гарантирует готовность всех связанных объектов/UI в произвольной следующей операции.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AddObject",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AddObject(arg1: group, arg2: object)",
+      "descriptor": "go",
+      "note": "Добавление object в group. Используется движком при заполнении Heroes.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AddUnitToParty",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AddUnitToParty(arg1: float, arg2: string, arg3: string)",
+      "descriptor": "fss",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AddUnitToServer",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AddUnitToServer(arg1: string, arg2: string, arg3: string, arg4: float, arg5: float, arg6: float)",
+      "descriptor": "sssfff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AddUnitUnderControl",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AddUnitUnderControl(arg1: float, arg2: object)",
+      "descriptor": "fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AttachParticleSource",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AttachParticleSource(arg1: float, arg2: float)",
+      "descriptor": "ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AttachParticles",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AttachParticles(arg1: float, arg2: object)",
+      "descriptor": "fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Attack",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Attack(arg1: object, arg2: object)",
+      "descriptor": "oo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "BlockUnit",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "BlockUnit(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Cast",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Cast(arg1: object, arg2: float, arg3: float)",
+      "descriptor": "off",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CastSpellPoint",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CastSpellPoint(arg1: string, arg2: float, arg3: float, arg4: float, arg5: float)",
+      "descriptor": "sffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CastSpellUnit",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CastSpellUnit(arg1: string, arg2: float, arg3: float, arg4: object)",
+      "descriptor": "sffo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "ConsoleFloat",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "ConsoleFloat(arg1: float)",
+      "descriptor": "f",
+      "note": "Вывод числового результата в консоль, не в панель ShowMessage.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "ConsoleString",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "ConsoleString(arg1: string)",
+      "descriptor": "s",
+      "note": "Вывод строки в консоль, не в панель ShowMessage.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CopyItems",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CopyItems(arg1: float, arg2: string, arg3: string)",
+      "descriptor": "fss",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CopyLoot",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CopyLoot(arg1: float, arg2: string, arg3: string)",
+      "descriptor": "fss",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CopyStats",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CopyStats(arg1: float, arg2: string, arg3: string)",
+      "descriptor": "fss",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Crawl",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Crawl(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CreateFX",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CreateFX(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: string)",
+      "descriptor": "fffffs",
+      "note": "Штатный интерфейс; не переносить сюда контракт CreateVoiceFX.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CreateFXSource",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 7,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CreateFXSource(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float, arg7: string)",
+      "descriptor": "ffffffs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CreateLightning",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 7,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 8,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CreateLightning(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float, arg7: float, arg8: float)",
+      "descriptor": "ffffffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CreateParticleSource",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CreateParticleSource(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: string)",
+      "descriptor": "fffffs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CreateParty",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CreateParty(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CreatePointLight",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 7,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 8,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CreatePointLight(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float, arg7: float, arg8: float)",
+      "descriptor": "ffffffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "CreateRandomizedFXSource",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 7,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 8,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 9,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 10,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "CreateRandomizedFXSource(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float, arg7: float, arg8: float, arg9: float, arg10: string)",
+      "descriptor": "fffffffffs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "DeleteArea",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "DeleteArea(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "DeleteFXSource",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "DeleteFXSource(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "DeleteLightning",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "DeleteLightning(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "DeleteParticleSource",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "DeleteParticleSource(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "DeletePointLight",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "DeletePointLight(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Follow",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Follow(arg1: object, arg2: object)",
+      "descriptor": "oo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "EnableLever",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "EnableLever(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "EraseQuestItem",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "EraseQuestItem(arg1: float, arg2: float)",
+      "descriptor": "ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "FixItems",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "FixItems()",
+      "descriptor": "",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "FixWorldTime",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "FixWorldTime(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GSSetVar",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GSSetVar(arg1: float, arg2: string, arg3: float)",
+      "descriptor": "fsf",
+      "note": "Запись GS: числовой контекст, строковый ключ, числовое значение.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GSSetVarMax",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GSSetVarMax(arg1: float, arg2: string, arg3: float)",
+      "descriptor": "fsf",
+      "note": "Не приравнивать к безусловному GSSetVar; используется максимум значения.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GSDelVar",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GSDelVar(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveDexterity",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveDexterity(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveIntelligence",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveIntelligence(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveItem",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveItem(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveMoney",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveMoney(arg1: float, arg2: float)",
+      "descriptor": "ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveQuestItem",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveQuestItem(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveSkill",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveSkill(arg1: object, arg2: string, arg3: float)",
+      "descriptor": "osf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveStrength",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveStrength(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveUnitQuestItem",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveUnitQuestItem(arg1: object, arg2: string)",
+      "descriptor": "os",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GiveUnitSpell",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GiveUnitSpell(arg1: object, arg2: string)",
+      "descriptor": "os",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GodMode",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GodMode(arg1: float, arg2: float)",
+      "descriptor": "ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Guard",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Guard(arg1: object, arg2: float, arg3: float, arg4: float)",
+      "descriptor": "offf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "HideObject",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "HideObject(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Idle",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Idle(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "InvokeAlarm",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "InvokeAlarm(arg1: float, arg2: float, arg3: float)",
+      "descriptor": "fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "InflictDamage",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "InflictDamage(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "KillScript",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "KillScript()",
+      "descriptor": "",
+      "note": "Прекращает дальнейшее обслуживание экземпляра; не равен return: текущие действия продолжаются.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "KillUnit",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "KillUnit(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "LeaveToZone",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "LeaveToZone(arg1: float, arg2: string, arg3: float)",
+      "descriptor": "fsf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Lie",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Lie(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "MoveParticleSource",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "MoveParticleSource(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float)",
+      "descriptor": "ffffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "MovePointLight",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "MovePointLight(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float)",
+      "descriptor": "ffffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "MoveToPoint",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "MoveToPoint(arg1: object, arg2: float, arg3: float)",
+      "descriptor": "off",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "MoveToObject",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "MoveToObject(arg1: object, arg2: object)",
+      "descriptor": "oo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "PlayAnimation",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "PlayAnimation(arg1: object, arg2: string)",
+      "descriptor": "os",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "PlayFX",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "PlayFX(arg1: float, arg2: float, arg3: float, arg4: float, arg5: string)",
+      "descriptor": "ffffs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "PlayCamera",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "PlayCamera(arg1: string)",
+      "descriptor": "s",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "PlayMovie",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "PlayMovie(arg1: string)",
+      "descriptor": "s",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "PlayMusic",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "PlayMusic(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetPlayerAggression",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetPlayerAggression(arg1: float, arg2: float)",
+      "descriptor": "ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QStart",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QStart(arg1: string)",
+      "descriptor": "s",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QFinish",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QFinish()",
+      "descriptor": "",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QObjArea",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QObjArea(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QObjSeeObject",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QObjSeeObject(arg1: string)",
+      "descriptor": "s",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QObjSeeUnit",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QObjSeeUnit(arg1: string)",
+      "descriptor": "s",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QObjKillUnit",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QObjKillUnit(arg1: string)",
+      "descriptor": "s",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QObjKillGroup",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QObjKillGroup(arg1: string)",
+      "descriptor": "s",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QObjUse",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QObjUse(arg1: string, arg2: float)",
+      "descriptor": "sf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QObjGetItem",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QObjGetItem(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "QuestComplete",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "QuestComplete(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RecalcMercBriefings",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RecalcMercBriefings()",
+      "descriptor": "",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RedeployParty",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RedeployParty(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RemoveParty",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RemoveParty(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RemoveObject",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RemoveObject(arg1: group, arg2: object)",
+      "descriptor": "go",
+      "note": "Аргументы group, object; это не удаление объекта из игрового мира.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RemoveObjectFromServer",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RemoveObjectFromServer(arg1: object)",
+      "descriptor": "o",
+      "note": "Отдельная команда для удаления объекта с сервера.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RemoveQuestItem",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RemoveQuestItem(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RemoveUnitFromControl",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RemoveUnitFromControl(arg1: float, arg2: object)",
+      "descriptor": "fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RemoveUnitFromParty",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RemoveUnitFromParty(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RemoveUnitFromServer",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RemoveUnitFromServer(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "ResetTarget",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "ResetTarget(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Rest",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Rest(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RotateTo",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RotateTo(arg1: object, arg2: float, arg3: float)",
+      "descriptor": "off",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Run",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Run(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "RunWorldTime",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "RunWorldTime(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SendEvent",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SendEvent(arg1: float, arg2: float)",
+      "descriptor": "ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SendStringEvent",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SendStringEvent(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Sentry",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Sentry(arg1: object, arg2: float, arg3: float)",
+      "descriptor": "off",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetBackGroundColor",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetBackGroundColor(arg1: float, arg2: float, arg3: float)",
+      "descriptor": "fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetCameraOrientation",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetCameraOrientation(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetCameraPosition",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetCameraPosition(arg1: float, arg2: float, arg3: float)",
+      "descriptor": "fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetCP",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetCP(arg1: object, arg2: float, arg3: float, arg4: float)",
+      "descriptor": "offf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetCPFast",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetCPFast(arg1: object, arg2: float, arg3: float, arg4: float)",
+      "descriptor": "offf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetCurrentParty",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetCurrentParty(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetDiplomacy",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetDiplomacy(arg1: float, arg2: float, arg3: float)",
+      "descriptor": "fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetDirectionToObject",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetDirectionToObject(arg1: float)",
+      "descriptor": "f",
+      "note": "В таблице действительно один float; назначение требует разбора обработчика.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetEnemy",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetEnemy(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetParticleSourceSize",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetParticleSourceSize(arg1: float, arg2: float)",
+      "descriptor": "ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetPlayer",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetPlayer(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetScience",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 7,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetScience(arg1: object, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float, arg7: float)",
+      "descriptor": "offffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetSpellAggression",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetSpellAggression(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetSunLight",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 7,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 8,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 9,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetSunLight(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float, arg7: float, arg8: float, arg9: float)",
+      "descriptor": "fffffffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetWaterLevel",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetWaterLevel(arg1: float, arg2: float, arg3: float)",
+      "descriptor": "fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SetWind",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SetWind(arg1: float, arg2: float, arg3: float, arg4: float)",
+      "descriptor": "ffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Sleep",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Sleep(arg1: float)",
+      "descriptor": "f",
+      "note": "Ожидание текущей последовательности в сегментах; не миллисекунды и не остановка всей игры.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SleepUntil",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SleepUntil(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SleepUntilIdle",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SleepUntilIdle(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Stand",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Stand(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "StartAnimation",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "StartAnimation(arg1: object, arg2: string)",
+      "descriptor": "os",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "ShowCredits",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "ShowCredits(arg1: string)",
+      "descriptor": "s",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "ShowBitmap",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "ShowBitmap(arg1: float, arg2: string)",
+      "descriptor": "fs",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SwitchLeverState",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SwitchLeverState(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "SwitchLeverStateEx",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "SwitchLeverStateEx(arg1: object, arg2: float, arg3: float)",
+      "descriptor": "off",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMAg",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMAg(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMAggression",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMAggression(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMClear",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMClear(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMCorpseWatcher",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMCorpseWatcher(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMFear",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMFear(arg1: object, arg2: float)",
+      "descriptor": "of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMFollow",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMFollow(arg1: object, arg2: object)",
+      "descriptor": "oo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMGuard",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMGuard(arg1: object, arg2: float, arg3: float, arg4: float)",
+      "descriptor": "offf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMGuardEx",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMGuardEx(arg1: object, arg2: float, arg3: float, arg4: float, arg5: float)",
+      "descriptor": "offff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMPatrol",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMPatrol(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMPatrolAddPoint",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMPatrolAddPoint(arg1: object, arg2: float, arg3: float)",
+      "descriptor": "off",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMPatrolAddPointLook",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMPatrolAddPointLook(arg1: object, arg2: float, arg3: float, arg4: float)",
+      "descriptor": "offf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMPatrolClear",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMPatrolClear(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMPlayer",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMPlayer(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMRevenge",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMRevenge(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMSentry",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMSentry(arg1: object, arg2: float, arg3: float)",
+      "descriptor": "off",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMStandard",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMStandard(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UMSuspection",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UMSuspection(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "WaitEndAnimation",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "WaitEndAnimation()",
+      "descriptor": "",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "WaitSegment",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "WaitSegment(arg1: float)",
+      "descriptor": "f",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Walk",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Walk(arg1: object)",
+      "descriptor": "o",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "For",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": true
+        },
+        {
+          "position": 2,
+          "type": "group",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": true,
+      "trailing_command_body": true,
+      "signature": "For(arg1: object_global, arg2: group) ( commands )",
+      "descriptor": "Og",
+      "note": "Первый аргумент — глобальная object-переменная перебора; после вызова отдельное тело (команды).",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "ForIf",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": true
+        },
+        {
+          "position": 2,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": true,
+      "trailing_command_body": true,
+      "signature": "ForIf(arg1: object_global, arg2: group, arg3: float) ( commands )",
+      "descriptor": "Ogf",
+      "note": "Глобальная object-переменная, группа, числовое условие; затем тело (команды).",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Every",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": true
+        },
+        {
+          "position": 2,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": true,
+      "trailing_command_body": false,
+      "signature": "Every(arg1: object_global, arg2: group, arg3: float)",
+      "descriptor": "FOgf",
+      "note": "Глобальная object-переменная, группа, выражение для элемента; результат float.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Any",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": true
+        },
+        {
+          "position": 2,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": true,
+      "trailing_command_body": false,
+      "signature": "Any(arg1: object_global, arg2: group, arg3: float)",
+      "descriptor": "FOgf",
+      "note": "Глобальная object-переменная, группа, выражение для элемента; результат float.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Sum",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": true
+        },
+        {
+          "position": 2,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": true,
+      "trailing_command_body": false,
+      "signature": "Sum(arg1: object_global, arg2: group, arg3: float)",
+      "descriptor": "FOgf",
+      "note": "Глобальная object-переменная, группа, выражение для элемента; результат float.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsEqual",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsEqual(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsLess",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsLess(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsGreater",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsGreater(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsEqualString",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsEqualString(arg1: string, arg2: string)",
+      "descriptor": "Fss",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Add",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Add(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Sub",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Sub(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Mul",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Mul(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Div",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Div(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Not",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Not(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "HaveItem",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "HaveItem(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "Оба аргумента float; строковое имя предмета здесь не подтверждено.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetObject",
+      "kind": "function",
+      "return_type": "object",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetObject(arg1: float)",
+      "descriptor": "Of",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetObjectByName",
+      "kind": "function",
+      "return_type": "object",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetObjectByName(arg1: string)",
+      "descriptor": "Os",
+      "note": "Аргумент — имя объекта, не имя Script или аудиопрофиля.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetObjectByID",
+      "kind": "function",
+      "return_type": "object",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetObjectByID(arg1: string)",
+      "descriptor": "Os",
+      "note": "Аргумент — строка ID; результат — ссылка object. Объект должен существовать.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsInSquare",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 6,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsInSquare(arg1: float, arg2: float, arg3: float, arg4: float, arg5: float, arg6: float)",
+      "descriptor": "Fffffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UnitInSquare",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 4,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 5,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UnitInSquare(arg1: object, arg2: float, arg3: float, arg4: float, arg5: float)",
+      "descriptor": "Foffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetMercsNumber",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetMercsNumber(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetZValue",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetZValue(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetBSZValue",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetBSZValue(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "HP",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "HP(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "MaxHP",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "MaxHP(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Mana",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Mana(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "MaxMana",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "MaxMana(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "DistanceUnitUnit",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "DistanceUnitUnit(arg1: object, arg2: object)",
+      "descriptor": "Foo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "DistanceUnitPoint",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "DistanceUnitPoint(arg1: object, arg2: float, arg3: float)",
+      "descriptor": "Foff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "Random",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "Random(arg1: float)",
+      "descriptor": "Ff",
+      "note": "Тип float → float подтверждён; границы диапазона этим реестром не устанавливаются.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetLeverState",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetLeverState(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetX",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetX(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetY",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetY(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetZ",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetZ(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetFutureX",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetFutureX(arg1: object, arg2: float)",
+      "descriptor": "Fof",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetFutureY",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetFutureY(arg1: object, arg2: float)",
+      "descriptor": "Fof",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GroupSize",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "group",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GroupSize(arg1: group)",
+      "descriptor": "Fg",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GroupAdd",
+      "kind": "function",
+      "return_type": "group",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "group",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GroupAdd(arg1: group, arg2: group)",
+      "descriptor": "Ggg",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GroupSub",
+      "kind": "function",
+      "return_type": "group",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "group",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GroupSub(arg1: group, arg2: group)",
+      "descriptor": "Ggg",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GroupCross",
+      "kind": "function",
+      "return_type": "group",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "group",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GroupCross(arg1: group, arg2: group)",
+      "descriptor": "Ggg",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GroupHas",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "group",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GroupHas(arg1: group, arg2: object)",
+      "descriptor": "Fgo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GSGetVar",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GSGetVar(arg1: float, arg2: string)",
+      "descriptor": "Ffs",
+      "note": "Чтение GS по числовому контексту и строковому ключу.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsUnitInWater",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsUnitInWater(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "UnitSee",
+      "kind": "function",
+      "return_type": "group",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "UnitSee(arg1: object)",
+      "descriptor": "Go",
+      "note": "Возвращает group, а не bool/float.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GroupSee",
+      "kind": "function",
+      "return_type": "group",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "group",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GroupSee(arg1: group)",
+      "descriptor": "Gg",
+      "note": "Возвращает group, а не bool/float.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "PlayerSee",
+      "kind": "function",
+      "return_type": "group",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "PlayerSee(arg1: float)",
+      "descriptor": "Gf",
+      "note": "Возвращает group, а не bool/float.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetDiplomacy",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetDiplomacy(arg1: float, arg2: float)",
+      "descriptor": "Fff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsEnemy",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsEnemy(arg1: object, arg2: float)",
+      "descriptor": "Fof",
+      "note": "Второй аргумент float, не второй object; не подменять сигнатуру по имени.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsAlive",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsAlive(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsCameraPlaying",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsCameraPlaying()",
+      "descriptor": "F",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsDead",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsDead(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsPlayerInDanger",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsPlayerInDanger(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsPlayerInSafety",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsPlayerInSafety(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetPlayerUnits",
+      "kind": "function",
+      "return_type": "group",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetPlayerUnits(arg1: float)",
+      "descriptor": "Gf",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetUnitOfPlayer",
+      "kind": "function",
+      "return_type": "object",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetUnitOfPlayer(arg1: float, arg2: float)",
+      "descriptor": "Off",
+      "note": "Два числа: игрок и индекс юнита; индекс не является ID объекта.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetPlayer",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetPlayer(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetObjectID",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetObjectID(arg1: object)",
+      "descriptor": "Fo",
+      "note": "Возвращает float, хотя GetObjectByID принимает string. Не добавлять несуществующее преобразование типов.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetAIClass",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetAIClass(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetLootItemsCount",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetLootItemsCount(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetMoney",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetMoney(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsAlarm",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsAlarm(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AlarmTime",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AlarmTime(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AlarmPosX",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AlarmPosX(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "AlarmPosY",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "AlarmPosY(arg1: float)",
+      "descriptor": "Ff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsNight",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsNight()",
+      "descriptor": "F",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetWorldTime",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetWorldTime()",
+      "descriptor": "F",
+      "note": "Штатная функция без аргументов; единицы и связь с интерфейсным временем уточнять по реализации.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsInArea",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "float",
+          "global_variable_required": false
+        },
+        {
+          "position": 3,
+          "type": "float",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsInArea(arg1: float, arg2: float, arg3: float)",
+      "descriptor": "Ffff",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "WasLooted",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "WasLooted(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsUnitVisible",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsUnitVisible(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "GetLeader",
+      "kind": "function",
+      "return_type": "object",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "GetLeader()",
+      "descriptor": "O",
+      "note": "Без аргументов; результат object.",
+      "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "IsUnitBlocked",
+      "kind": "function",
+      "return_type": "float",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "IsUnitBlocked(arg1: object)",
+      "descriptor": "Fo",
+      "note": "",
+      "verification": "name_and_signature_verified_in_native_binary"
+    }
+  ]
+}

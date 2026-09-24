@@ -1,0 +1,837 @@
+{
+  "sourceSha256": "4A1E79A4C55766C3E196CD4CD78AFDE428D54B09582262DBBCF61C9A731E0508",
+  "commands": [
+    {
+      "name": "GetPlayerOfUnit",
+      "format": "Fo",
+      "handler": "GetPlayerOfUnit_handler",
+      "body": false,
+      "debug": false,
+      "line": 1714
+    },
+    {
+      "name": "GetUnitExp",
+      "format": "Fo?s",
+      "handler": "GetUnitExp_handler",
+      "body": false,
+      "debug": false,
+      "line": 1715
+    },
+    {
+      "name": "GetArmor",
+      "format": "Foff",
+      "handler": "GetArmor_handler",
+      "body": false,
+      "debug": false,
+      "line": 1716
+    },
+    {
+      "name": "GetObjectStringID",
+      "format": "So",
+      "handler": "GetObjectStringID_handler",
+      "body": false,
+      "debug": false,
+      "line": 1717
+    },
+    {
+      "name": "FloatToStr",
+      "format": "Sf?f",
+      "handler": "FloatToStr_handler",
+      "body": false,
+      "debug": false,
+      "line": 1718
+    },
+    {
+      "name": "StrToFloat",
+      "format": "Fs",
+      "handler": "StrToFloat_handler",
+      "body": false,
+      "debug": false,
+      "line": 1719
+    },
+    {
+      "name": "StrCat",
+      "format": "Sss+",
+      "handler": "StrCat_handler",
+      "body": false,
+      "debug": false,
+      "line": 1720
+    },
+    {
+      "name": "StrLen",
+      "format": "Fs",
+      "handler": "StrLen_handler",
+      "body": false,
+      "debug": false,
+      "line": 1721
+    },
+    {
+      "name": "Sin",
+      "format": "Ff",
+      "handler": "Sin_handler",
+      "body": false,
+      "debug": false,
+      "line": 1722
+    },
+    {
+      "name": "Cos",
+      "format": "Ff",
+      "handler": "Cos_handler",
+      "body": false,
+      "debug": false,
+      "line": 1723
+    },
+    {
+      "name": "Pow",
+      "format": "Fff",
+      "handler": "Pow_handler",
+      "body": false,
+      "debug": false,
+      "line": 1724
+    },
+    {
+      "name": "DistancePointPoint",
+      "format": "Fff",
+      "handler": "DistancePointPoint_handler",
+      "body": false,
+      "debug": false,
+      "line": 1725
+    },
+    {
+      "name": "NearestUnit",
+      "format": "Offff",
+      "handler": "NearestUnit_handler",
+      "body": false,
+      "debug": false,
+      "line": 1726
+    },
+    {
+      "name": "UnitsNearPoint",
+      "format": "Gffff",
+      "handler": "UnitsNearPoint_handler",
+      "body": false,
+      "debug": false,
+      "line": 1727
+    },
+    {
+      "name": "GSSetPlayerVar",
+      "format": "fsf",
+      "handler": "GSSetPlayerVar_handler",
+      "body": false,
+      "debug": false,
+      "line": 1729
+    },
+    {
+      "name": "GSGetPlayerVar",
+      "format": "Ffs",
+      "handler": "GSGetPlayerVar_handler",
+      "body": false,
+      "debug": false,
+      "line": 1730
+    },
+    {
+      "name": "GiveExp",
+      "format": "ff",
+      "handler": "GiveExp_handler",
+      "body": false,
+      "debug": false,
+      "line": 1731
+    },
+    {
+      "name": "GiveUnitExp",
+      "format": "of",
+      "handler": "GiveUnitExp_handler",
+      "body": false,
+      "debug": false,
+      "line": 1732
+    },
+    {
+      "name": "StartCameraSave",
+      "format": "s",
+      "handler": "StartCameraSave_handler",
+      "body": false,
+      "debug": false,
+      "line": 1733
+    },
+    {
+      "name": "StopCameraSave",
+      "format": "",
+      "handler": "StopCameraSave_handler",
+      "body": false,
+      "debug": false,
+      "line": 1734
+    },
+    {
+      "name": "Say",
+      "format": "s+",
+      "handler": "Say_handler",
+      "body": false,
+      "debug": false,
+      "line": 1735
+    },
+    {
+      "name": "ConsoleString",
+      "format": "s+",
+      "handler": "ConsoleString_handler",
+      "body": false,
+      "debug": false,
+      "line": 1736
+    },
+    {
+      "name": "Add",
+      "format": "Fff+",
+      "handler": "Add_handler",
+      "body": false,
+      "debug": false,
+      "line": 1737
+    },
+    {
+      "name": "Mul",
+      "format": "Fff+",
+      "handler": "Mul_handler",
+      "body": false,
+      "debug": false,
+      "line": 1738
+    },
+    {
+      "name": "And",
+      "format": "Fff+",
+      "handler": "And_handler",
+      "body": false,
+      "debug": false,
+      "line": 1739
+    },
+    {
+      "name": "Or",
+      "format": "Fff+",
+      "handler": "Or_handler",
+      "body": false,
+      "debug": false,
+      "line": 1740
+    },
+    {
+      "name": "Max",
+      "format": "Fff+",
+      "handler": "Max_handler",
+      "body": false,
+      "debug": false,
+      "line": 1741
+    },
+    {
+      "name": "Min",
+      "format": "Fff+",
+      "handler": "Min_handler",
+      "body": false,
+      "debug": false,
+      "line": 1742
+    },
+    {
+      "name": "Abs",
+      "format": "Ff",
+      "handler": "Abs_handler",
+      "body": false,
+      "debug": false,
+      "line": 1743
+    },
+    {
+      "name": "Round",
+      "format": "Ff",
+      "handler": "Round_handler",
+      "body": false,
+      "debug": false,
+      "line": 1744
+    },
+    {
+      "name": "Ceil",
+      "format": "Ff",
+      "handler": "Ceil_handler",
+      "body": false,
+      "debug": false,
+      "line": 1745
+    },
+    {
+      "name": "Floor",
+      "format": "Ff",
+      "handler": "Floor_handler",
+      "body": false,
+      "debug": false,
+      "line": 1746
+    },
+    {
+      "name": "Random",
+      "format": "Ff?f",
+      "handler": "Random_handler",
+      "body": false,
+      "debug": false,
+      "line": 1747
+    },
+    {
+      "name": "RandStr",
+      "format": "Sss+",
+      "handler": "RandStr_handler",
+      "body": false,
+      "debug": false,
+      "line": 1748
+    },
+    {
+      "name": "RandObj",
+      "format": "Og",
+      "handler": "RandObj_handler",
+      "body": false,
+      "debug": false,
+      "line": 1749
+    },
+    {
+      "name": "StrHas",
+      "format": "Fss",
+      "handler": "StrHas_handler",
+      "body": false,
+      "debug": false,
+      "line": 1750
+    },
+    {
+      "name": "StrMid",
+      "format": "Ssff",
+      "handler": "StrMid_handler",
+      "body": false,
+      "debug": false,
+      "line": 1751
+    },
+    {
+      "name": "StrLower",
+      "format": "Ss",
+      "handler": "StrLower_handler",
+      "body": false,
+      "debug": false,
+      "line": 1752
+    },
+    {
+      "name": "StrUpper",
+      "format": "Ss",
+      "handler": "StrUpper_handler",
+      "body": false,
+      "debug": false,
+      "line": 1753
+    },
+    {
+      "name": "ResetTarget",
+      "format": "o",
+      "handler": "ResetTarget_handler",
+      "body": false,
+      "debug": false,
+      "line": 1754
+    },
+    {
+      "name": "SendCurrentParty",
+      "format": "f",
+      "handler": "SendCurrentParty_handler",
+      "body": false,
+      "debug": false,
+      "line": 1755
+    },
+    {
+      "name": "PlayerExists",
+      "format": "Ff",
+      "handler": "PlayerExists_handler",
+      "body": false,
+      "debug": false,
+      "line": 1756
+    },
+    {
+      "name": "Loot",
+      "format": "fo",
+      "handler": "Loot_handler",
+      "body": false,
+      "debug": false,
+      "line": 1757
+    },
+    {
+      "name": "GameOver",
+      "format": "",
+      "handler": "GameOver_handler",
+      "body": false,
+      "debug": false,
+      "line": 1758
+    },
+    {
+      "name": "GameOverMSG",
+      "format": "ss",
+      "handler": "GameOverMSG_handler",
+      "body": false,
+      "debug": false,
+      "line": 1759
+    },
+    {
+      "name": "GetDexterity",
+      "format": "Fo",
+      "handler": "GetDexterity_handler",
+      "body": false,
+      "debug": false,
+      "line": 1760
+    },
+    {
+      "name": "GetIntelligence",
+      "format": "Fo",
+      "handler": "GetIntelligence_handler",
+      "body": false,
+      "debug": false,
+      "line": 1761
+    },
+    {
+      "name": "GetStrength",
+      "format": "Fo",
+      "handler": "GetStrength_handler",
+      "body": false,
+      "debug": false,
+      "line": 1762
+    },
+    {
+      "name": "GetSkill",
+      "format": "Fos",
+      "handler": "GetSkill_handler",
+      "body": false,
+      "debug": false,
+      "line": 1763
+    },
+    {
+      "name": "GetActions",
+      "format": "Fo",
+      "handler": "GetActions_handler",
+      "body": false,
+      "debug": false,
+      "line": 1764
+    },
+    {
+      "name": "GetActionsBase",
+      "format": "Fo",
+      "handler": "GetActionsBase_handler",
+      "body": false,
+      "debug": false,
+      "line": 1765
+    },
+    {
+      "name": "GetEncumbrance",
+      "format": "Fo",
+      "handler": "GetEncumbrance_handler",
+      "body": false,
+      "debug": false,
+      "line": 1766
+    },
+    {
+      "name": "GetMaxEncumbrance",
+      "format": "Fo",
+      "handler": "GetMaxEncumbrance_handler",
+      "body": false,
+      "debug": false,
+      "line": 1767
+    },
+    {
+      "name": "GetPerk",
+      "format": "Fos",
+      "handler": "GetPerk_handler",
+      "body": false,
+      "debug": false,
+      "line": 1768
+    },
+    {
+      "name": "GetPrototype",
+      "format": "So",
+      "handler": "GetPrototype_handler",
+      "body": false,
+      "debug": false,
+      "line": 1769
+    },
+    {
+      "name": "GetRace",
+      "format": "So",
+      "handler": "GetRace_handler",
+      "body": false,
+      "debug": false,
+      "line": 1770
+    },
+    {
+      "name": "IsFileExists",
+      "format": "Fs",
+      "handler": "IsFileExists_handler",
+      "body": false,
+      "debug": false,
+      "line": 1771
+    },
+    {
+      "name": "GSListPlayerVars",
+      "format": "f",
+      "handler": "GSListPlayerVars_handler",
+      "body": false,
+      "debug": false,
+      "line": 1772
+    },
+    {
+      "name": "IsMLooted",
+      "format": "Fo",
+      "handler": "IsMLooted_handler",
+      "body": false,
+      "debug": false,
+      "line": 1773
+    },
+    {
+      "name": "AckPotion",
+      "format": "Fo",
+      "handler": "AckPotion_handler",
+      "body": false,
+      "debug": false,
+      "line": 1774
+    },
+    {
+      "name": "AddQuick2Unit",
+      "format": "os",
+      "handler": "AddQuick2Unit_handler",
+      "body": false,
+      "debug": false,
+      "line": 1775
+    },
+    {
+      "name": "GetUnitPose",
+      "format": "Fo",
+      "handler": "GetUnitPose_handler",
+      "body": false,
+      "debug": false,
+      "line": 1776
+    },
+    {
+      "name": "CheckObjectFlag",
+      "format": "Ffo",
+      "handler": "CheckObjectFlag_handler",
+      "body": false,
+      "debug": false,
+      "line": 1777
+    },
+    {
+      "name": "DamageMainUnitWeapon",
+      "format": "Fof",
+      "handler": "DamageMainUnitWeapon_handler",
+      "body": false,
+      "debug": false,
+      "line": 1778
+    },
+    {
+      "name": "CastSomeSpell",
+      "format": "offf",
+      "handler": "CastSomeSpell_handler",
+      "body": false,
+      "debug": false,
+      "line": 1779
+    },
+    {
+      "name": "CastSomeSpellTarget",
+      "format": "oof",
+      "handler": "CastSomeSpellTarget_handler",
+      "body": false,
+      "debug": false,
+      "line": 1780
+    },
+    {
+      "name": "GetUnitState",
+      "format": "Fo",
+      "handler": "GetUnitState_handler",
+      "body": false,
+      "debug": false,
+      "line": 1781
+    },
+    {
+      "name": "CheckObjectFlag2",
+      "format": "Ffo",
+      "handler": "CheckObjectFlag2_handler",
+      "body": false,
+      "debug": false,
+      "line": 1782
+    },
+    {
+      "name": "IsUnitFFeebled",
+      "format": "Fo",
+      "handler": "IsUnitFFeebled_handler",
+      "body": false,
+      "debug": false,
+      "line": 1783
+    },
+    {
+      "name": "IsUnitFStun",
+      "format": "Fo",
+      "handler": "IsUnitFStun_handler",
+      "body": false,
+      "debug": false,
+      "line": 1784
+    },
+    {
+      "name": "IsUnitFDontmove",
+      "format": "Fo",
+      "handler": "IsUnitFDontmove_handler",
+      "body": false,
+      "debug": false,
+      "line": 1785
+    },
+    {
+      "name": "LTZ",
+      "format": "s",
+      "handler": "LeaveToZone_handler",
+      "body": false,
+      "debug": false,
+      "line": 1786
+    },
+    {
+      "name": "InflictDamageEx",
+      "format": "offff",
+      "handler": "InflictDamageEx_handler",
+      "body": false,
+      "debug": false,
+      "line": 1787
+    },
+    {
+      "name": "MusicNPT",
+      "format": "F",
+      "handler": "MusicNextPlayTime_handler",
+      "body": false,
+      "debug": false,
+      "line": 1788
+    },
+    {
+      "name": "MusicFM",
+      "format": "S",
+      "handler": "MusicForcedMusic_handler",
+      "body": false,
+      "debug": false,
+      "line": 1789
+    },
+    {
+      "name": "MusicBFM",
+      "format": "F",
+      "handler": "MusicBForcedMusic_handler",
+      "body": false,
+      "debug": false,
+      "line": 1790
+    },
+    {
+      "name": "CmdSkill",
+      "format": "ooffff",
+      "handler": "CmdSkill_handler",
+      "body": false,
+      "debug": false,
+      "line": 1791
+    },
+    {
+      "name": "GetUnitWeapon",
+      "format": "Sof",
+      "handler": "GetUnitWeapon_handler",
+      "body": false,
+      "debug": false,
+      "line": 1792
+    },
+    {
+      "name": "GetUnitArmor",
+      "format": "Sof",
+      "handler": "GetUnitArmor_handler",
+      "body": false,
+      "debug": false,
+      "line": 1793
+    },
+    {
+      "name": "GetSkill2",
+      "format": "Fof",
+      "handler": "GetSkill2_handler",
+      "body": false,
+      "debug": false,
+      "line": 1794
+    },
+    {
+      "name": "GetSkill3",
+      "format": "Fof",
+      "handler": "GetSkill3_handler",
+      "body": false,
+      "debug": false,
+      "line": 1795
+    },
+    {
+      "name": "GetPerk2",
+      "format": "Fof",
+      "handler": "GetPerk2_handler",
+      "body": false,
+      "debug": false,
+      "line": 1796
+    },
+    {
+      "name": "SetUnitAggression",
+      "format": "of",
+      "handler": "SetUnitAggression_handler",
+      "body": false,
+      "debug": false,
+      "line": 1797
+    },
+    {
+      "name": "GetUnitAggression",
+      "format": "Fo",
+      "handler": "GetUnitAggression_handler",
+      "body": false,
+      "debug": false,
+      "line": 1798
+    },
+    {
+      "name": "GiveActivityTime",
+      "format": "o",
+      "handler": "GiveActivityTime_handler",
+      "body": false,
+      "debug": true,
+      "line": 1802
+    },
+    {
+      "name": "Eval",
+      "format": "s",
+      "handler": "Eval_handler",
+      "body": false,
+      "debug": true,
+      "line": 1803
+    },
+    {
+      "name": "IfThen",
+      "format": "f",
+      "handler": "IfThen_handler",
+      "body": true,
+      "debug": true,
+      "line": 1804
+    },
+    {
+      "name": "While",
+      "format": "f",
+      "handler": "While_handler",
+      "body": true,
+      "debug": true,
+      "line": 1805
+    },
+    {
+      "name": "ForInStr",
+      "format": "sss",
+      "handler": "ForInStr_handler",
+      "body": true,
+      "debug": true,
+      "line": 1806
+    },
+    {
+      "name": "TestF",
+      "format": "f",
+      "handler": "Test_handler",
+      "body": false,
+      "debug": true,
+      "line": 1807
+    },
+    {
+      "name": "TestS",
+      "format": "s",
+      "handler": "Test_handler",
+      "body": false,
+      "debug": true,
+      "line": 1808
+    },
+    {
+      "name": "TestO",
+      "format": "o",
+      "handler": "Test_handler",
+      "body": false,
+      "debug": true,
+      "line": 1809
+    },
+    {
+      "name": "TestG",
+      "format": "g",
+      "handler": "Test_handler",
+      "body": false,
+      "debug": true,
+      "line": 1810
+    },
+    {
+      "name": "Test",
+      "format": "fgosfgos",
+      "handler": "Test_handler",
+      "body": false,
+      "debug": true,
+      "line": 1811
+    },
+    {
+      "name": "NpcCombatConsumable",
+      "format": "ssof",
+      "handler": "NpcCombatConsumable_handler",
+      "body": false,
+      "debug": false,
+      "line": 1825
+    },
+    {
+      "name": "RefreshUnitStats",
+      "format": "o",
+      "handler": "RefreshUnitStats_handler",
+      "body": false,
+      "debug": false,
+      "line": 1830
+    },
+    {
+      "name": "JMVRegisterLoot",
+      "format": "Fos",
+      "handler": "JMVRegisterLoot_handler",
+      "body": false,
+      "debug": false,
+      "line": 1831
+    },
+    {
+      "name": "CreateVoiceFX",
+      "format": "osf?ff",
+      "handler": "CreateVoiceFX_handler",
+      "body": false,
+      "debug": false,
+      "line": 1832
+    },
+    {
+      "name": "RegisterLoot",
+      "format": "os",
+      "handler": "RegisterLoot_handler",
+      "body": false,
+      "debug": false,
+      "line": 1833
+    },
+    {
+      "name": "ShowMessage",
+      "format": "s",
+      "handler": "ShowMessage_handler",
+      "body": false,
+      "debug": false,
+      "line": 1834
+    },
+    {
+      "name": "CreateVoiceFXWait",
+      "format": "osf?ff",
+      "handler": "CreateVoiceFXWait_handler",
+      "body": false,
+      "debug": false,
+      "line": 1835
+    },
+    {
+      "name": "JmvBranchUnless",
+      "format": "ff",
+      "handler": "BranchUnless_handler",
+      "body": false,
+      "debug": false,
+      "line": 1836
+    },
+    {
+      "name": "JmvBranchSkip",
+      "format": "f",
+      "handler": "BranchSkip_handler",
+      "body": false,
+      "debug": false,
+      "line": 1837
+    },
+    {
+      "name": "PartyDisguiseMatches",
+      "format": "Fs",
+      "handler": "PartyDisguiseMatches_handler",
+      "body": false,
+      "debug": false,
+      "line": 1838
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <Style TargetType="ComboBox">
+  <Setter Property="Foreground" Value="#EEF1EC"/><Setter Property="Background" Value="#1B1E1C"/><Setter Property="BorderBrush" Value="#465048"/><Setter Property="MinHeight" Value="34"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBox">
+   <Grid>
+    <ToggleButton Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+     <ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><Border Background="#1B1E1C" BorderBrush="#465048" BorderThickness="1" CornerRadius="4"><TextBlock Text="▾" Foreground="#39B86E" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8"/></Border></ControlTemplate></ToggleButton.Template>
+    </ToggleButton>
+    <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="9,5,26,5" IsHitTestVisible="False" VerticalAlignment="Center"/>
+    <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False">
+     <Border Background="#1B1E1C" BorderBrush="#465048" BorderThickness="1" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="240"><ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer></Border>
+    </Popup>
+   </Grid>
+   <ControlTemplate.Triggers><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger></ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
+ <Style TargetType="ComboBoxItem">
+  <Setter Property="Foreground" Value="#EEF1EC"/><Setter Property="Padding" Value="9,7"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem"><Border x:Name="Row" Background="#1B1E1C" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border><ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Row" Property="Background" Value="#28543A"/></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="Row" Property="Background" Value="#233A2C"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+ </Style>
+ <Style TargetType="TreeView"><Setter Property="Background" Value="#131513"/><Setter Property="Foreground" Value="#EEF1EC"/><Setter Property="BorderBrush" Value="#303632"/></Style>
+ <Style TargetType="TreeViewItem">
+  <Setter Property="Foreground" Value="#EEF1EC"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TreeViewItem">
+   <StackPanel><Border x:Name="HeaderBorder" Background="Transparent" Padding="3"><DockPanel>
+    <ToggleButton x:Name="Expander" DockPanel.Dock="Left" Focusable="False" Width="22" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+     <ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><TextBlock x:Name="Arrow" Text="▸" Foreground="#39B86E"/><ControlTemplate.Triggers><Trigger Property="IsChecked" Value="True"><Setter TargetName="Arrow" Property="Text" Value="▾"/></Trigger></ControlTemplate.Triggers></ControlTemplate></ToggleButton.Template>
+    </ToggleButton><ContentPresenter ContentSource="Header"/></DockPanel></Border><ItemsPresenter x:Name="Children" Margin="16,0,0,0" Visibility="Collapsed"/></StackPanel>
+   <ControlTemplate.Triggers><Trigger Property="IsExpanded" Value="True"><Setter TargetName="Children" Property="Visibility" Value="Visible"/></Trigger><Trigger Property="HasItems" Value="False"><Setter TargetName="Expander" Property="Visibility" Value="Hidden"/></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="HeaderBorder" Property="Background" Value="#233A2C"/></Trigger></ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
+</ResourceDictionary>
