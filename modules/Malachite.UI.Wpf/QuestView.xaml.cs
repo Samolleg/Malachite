@@ -60,8 +60,6 @@ public partial class QuestView : UserControl
         InitializeCompletion();
         CodeEditor.PreviewKeyDown += TextEditingKey;
         InitializeTextEditing();
-        CodeEditor.PreviewKeyDown += TextEditingKey;
-        InitializeTextEditing();
         CodeEditor.SelectionChanged += NotifyDatabaseSelection;
         FolderButton.IsEnabled = Host.Files is IModuleFileBrowser;
         FolderButton.ToolTip = FolderButton.IsEnabled ? "Индекс GS-связей карт из папки, выбранной через редактор" : "Хост не поддерживает выбор папки MOB.";
@@ -85,8 +83,6 @@ public partial class QuestView : UserControl
         }
         if (e.Handled) return;
         if (e.Key == Key.F3) { FindInCode(Keyboard.Modifiers == ModifierKeys.Shift); e.Handled = true; return; }
-        if (e.Handled) return;
-        if (e.Key == Key.F3) { FindInCode(Keyboard.Modifiers == ModifierKeys.Shift); e.Handled = true; return; }
         if (e.Key == Key.F5) { Check_Click(sender, e); e.Handled = true; }
         if (e.Key == Key.F1 && !cardDirty)
         {
@@ -102,7 +98,6 @@ public partial class QuestView : UserControl
         if (e.Key is Key.Z or Key.Y && (FindText.IsKeyboardFocusWithin || ReplaceText.IsKeyboardFocusWithin || HomeSearch.IsKeyboardFocusWithin || SearchBox.IsKeyboardFocusWithin)) return;
         if (e.Key == Key.Z) { RunCommand(DatabaseEditor.Modules.V1.ModuleCommand.Undo); e.Handled = true; }
         if (e.Key == Key.Y) { RunCommand(DatabaseEditor.Modules.V1.ModuleCommand.Redo); e.Handled = true; }
-        if (e.Key == Key.H) { ShowFind(true); e.Handled = true; }
         if (e.Key == Key.H) { ShowFind(true); e.Handled = true; }
         if (e.Key == Key.F) { RunCommand(ModuleCommand.Find); e.Handled = true; }
     }
