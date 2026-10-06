@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using DatabaseEditor.Modules.V1;
 using QuestStudio;
 using TextChange = QuestStudio.TextChange;
@@ -67,6 +68,11 @@ internal static class WorkbenchVerification
         byte[] objectChunk=Chunk(0xBBBB0000,Join(Chunk(0xB002,BitConverter.GetBytes(205u)),Chunk(0xB004,cp.GetBytes("Стражник")),Chunk(0xBBBB0002,cp.GetBytes("guard")),Chunk(0xB013,[1]),Chunk(0xB009,Join(BitConverter.GetBytes(1f),BitConverter.GetBytes(2f),BitConverter.GetBytes(3f)))));
         var mob=new MobDocument(Chunk(MobDocument.RootId,Join(Chunk(MobDocument.LegacyId,cp.GetBytes("WorldScript()")),Chunk(0xB000,objectChunk))));
         var obj=MobObjects.Read(mob).Single();check(obj.Id==205&&obj.Name=="Стражник"&&obj.Prototype=="guard"&&obj.ScriptEnabled&&obj.Position=="1; 2; 3","MOB objects typed chunk and CP1251 decoding");
+        byte[] leverChunk=Chunk(0xBBAC0000,Join(Chunk(0xB002,BitConverter.GetBytes(1063u)),Chunk(0xB004,cp.GetBytes("Рычаг")),Chunk(0xB006,cp.GetBytes("nmoloot300")),Chunk(0xB013,[0])));
+        var leverMob=new MobDocument(Chunk(MobDocument.RootId,Join(Chunk(MobDocument.LegacyId,cp.GetBytes("WorldScript()")),Chunk(0xB000,leverChunk))));
+        var leverObjects=MobObjects.Read(leverMob);
+        check(leverObjects.Count==1&&leverObjects[0].Id==1063&&leverObjects[0].Kind=="Рычаг"&&leverObjects[0].Prototype=="nmoloot300",
+            "MOB lever chunk is available as a typed object for script binding");
         check(mob.Encode(mob.Text).SequenceEqual(mob.Original),"object read leaves original MOB exact");
         check(ScriptReferences.Find(a,"Task",ScriptSearchKind.Symbol).Count==4,"symbol search includes declaration body and calls only");
         check(ScriptReferences.Find(a,"Task",ScriptSearchKind.Text).Count>4,"text search explicitly includes strings and comments");
