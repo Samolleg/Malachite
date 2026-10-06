@@ -4,6 +4,10 @@ namespace QuestStudio;
 
 public static class AddonValidation
 {
+    static readonly HashSet<string> HandlerContractMismatches = new(
+        ["DistancePointPoint", "CheckObjectFlag", "CheckObjectFlag2", "CastSomeSpellTarget"], StringComparer.OrdinalIgnoreCase);
+    public static bool HasKnownHandlerContractMismatch(string name) => HandlerContractMismatches.Contains(name);
+
     public static void Check(Analysis a, CommandRegistry registry)
     {
         var tokens = a.Tokens;
@@ -11,7 +15,7 @@ public static class AddonValidation
         foreach (var call in a.Calls)
         {
             if (!registry.Commands.TryGetValue(call.Name, out var command)) continue;
-            if (command.Name is "DistancePointPoint" or "CheckObjectFlag" or "CheckObjectFlag2" or "CastSomeSpellTarget")
+            if (HasKnownHandlerContractMismatch(command.Name))
                 a.Add("warning", "HANDLER_CONTRACT", $"{call.Name}: в исходнике аддона обнаружено несоответствие регистрации и чтения аргументов обработчиком. Подробности — в подсказке команды.", call.Start);
             int next = tokens.FindIndex(t => t.Start >= call.End);
             if (next >= 0 && tokens[next].Value == "(" && a.Pairs.TryGetValue(next, out int end))
