@@ -94,7 +94,13 @@ internal static class WorkbenchVerification
             check(readable>0&&objects>0&&issues.Count==0,"live MOB object catalogue: "+readable+" maps, "+objects+" objects, "+scriptUnavailable+" script unavailable");
             File.WriteAllText(Path.Combine(output,"live-object-report.json"),System.Text.Json.JsonSerializer.Serialize(new{readable,objects,scriptUnavailable,issues}));
         }
-        var view=new QuestView(new TestDocumentHost());
+        var workbenchHost=new TestDocumentHost{CompleteSave=true};
+        var dbReader=(TestReader)workbenchHost.Workspace;
+        var dbStamp=new WorkspaceStamp(Guid.NewGuid(),1,0);
+        dbReader.Current=new WorkspaceSnapshot(dbStamp,"disposable-db",false,
+            [new RecordDto(new RecordRef(dbStamp.SessionId,dbStamp.Generation,"quests.quests",Guid.NewGuid()),
+                "qTest","Проверочный квест",[],[new TextDto("quest qTest","Проверочный квест","Найти свидетеля",false)])]);
+        var view=new QuestView(workbenchHost);
         try
         {
             view.LoadWorkspace(new Workspace{Name="workbench",Text=source,Mob=mob},false);
@@ -105,6 +111,7 @@ internal static class WorkbenchVerification
             typeof(QuestView).GetMethod("Workbench_Click",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(view,[view,new RoutedEventArgs()]);
             var overlay=(Grid)typeof(QuestView).GetField("workbench",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(view)!;
             var content=(Grid)overlay.Children[1];var nav=(ListBox)content.Children[0];
+            check(nav.Items.Count==8&&!nav.Items.Cast<string>().Any(p=>p.Contains("Генератор")),"workbench retains eight manual tools without generator page");
             IEnumerable<T> Desc<T>(DependencyObject parent) where T:DependencyObject
             {for(int i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++){var child=VisualTreeHelper.GetChild(parent,i);if(child is T t)yield return t;foreach(var nested in Desc<T>(child))yield return nested;}}
             void Click(string name)=>Desc<Button>(overlay).Single(b=>b.Content as string==name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -137,6 +144,16 @@ internal static class WorkbenchVerification
                 if(page==7){var list=Desc<ListBox>(content.Children[1]).Single();list.SelectedIndex=0;Click("Предпросмотр восстановления выбранных");check(preview.Text.Length>0&&!preview.Text.StartsWith("СОХРАНЕНО"),"change history creates selective restore preview");}
                 if(page==0||page==5||page==7){view.UpdateLayout();var image=new RenderTargetBitmap(1180,680,96,96,PixelFormats.Pbgra32);image.Render(view);var png=new PngBitmapEncoder();png.Frames.Add(BitmapFrame.Create(image));using var f=File.Create(Path.Combine(output,"workbench-"+page+".png"));png.Save(f);}
             }
+            nav.SelectedIndex=0;
+            Click("Предпросмотр нового этапа");
+            string manualResult=content.Children.OfType<TextBox>().Single().Text;
+            Click("Применить изменения");
+            check(editor.Text==manualResult&&editor.Text.Contains("Script DraftStep"),"manual composer applies its preview as an editor operation");
+            view.RunCommand(ModuleCommand.Undo);check(editor.Text==renamed.Result,"manual composer apply undoes once");
+            view.RunCommand(ModuleCommand.Redo);check(editor.Text==manualResult,"manual composer redo restores exact text");
+            view.RunCommand(ModuleCommand.Save);check(workbenchHost.SaveAllCalls==1&&!view.HasPendingChanges,"manual composer result saves through host document command");
+            var reopened=new MobDocument(mob.Encode(editor.Text));
+            check(reopened.Text==editor.Text&&MobObjects.Read(reopened).Single().Id==205&&mob.Text=="WorldScript()","manual composer MOB roundtrip preserves objects and original bytes");
         }
         finally{view.Stop();}
         var jumpView=new QuestView(new TestDocumentHost());

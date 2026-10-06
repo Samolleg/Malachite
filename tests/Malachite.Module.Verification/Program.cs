@@ -21,6 +21,7 @@ internal static class Program
   var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
   if (args.Length > 1 && args[1] == "editor-perf") { EditorPerformance.Run(args[0]); return 0; }
   Directory.CreateDirectory(args[0]);
+  GeneratorRemovalVerification.Run(Check);
   WorkbenchVerification.Run(Check,args[0]);
   if(args.Length>1 && args[1]=="workbench-only") { File.WriteAllText(Path.Combine(args[0],"workbench-report.json"),JsonSerializer.Serialize(new{failures,checks},new JsonSerializerOptions{WriteIndented=true})); return failures==0?0:1; }
   TemplateVerification.Run(Check,args[0]);

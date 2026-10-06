@@ -13,7 +13,7 @@ public partial class QuestView
 {
     Grid? workbench;
     CancellationTokenSource? workbenchSearch;
-    void CancelWorkbenchSearch(){workbenchSearch?.Cancel();}
+    void CancelWorkbenchSearch()=>workbenchSearch?.Cancel();
     Action? captureComposerDraft;
     sealed class ComposerDraft
     {
@@ -66,8 +66,8 @@ public partial class QuestView
         var apply=new Button{Content="Применить изменения",IsEnabled=false};DockPanel.SetDock(apply,Dock.Right);footer.Children.Add(apply);var status=ToolNote("Изменения кода сначала показываются справа и отменяются общей кнопкой отмены.");status.MaxHeight=65;footer.Children.Add(status);
         EditorPlan? plan=null;
         var comparisonBar=new StackPanel{Orientation=Orientation.Horizontal};DockPanel.SetDock(comparisonBar,Dock.Right);header.Children.Insert(1,comparisonBar);
-        var compare=ToolButton(comparisonBar,"Различия",()=>{if(plan==null)return;preview.Text=string.Join("\n\n",EditorOperations.Diff(plan.Source,plan.Result).Select(d=>"ПОЗИЦИЯ "+d.Start+"\n− Было:\n"+d.Before+"\n+ Стало:\n"+d.After));});
-        var complete=ToolButton(comparisonBar,"Итоговый код",()=>{if(plan!=null)preview.Text=plan.Result;});compare.IsEnabled=complete.IsEnabled=false;
+        var compare=ToolButton(comparisonBar,"Различия",()=>{if(plan==null)return;preview.TextWrapping=TextWrapping.NoWrap;preview.Text=string.Join("\n\n",EditorOperations.Diff(plan.Source,plan.Result).Select(d=>"ПОЗИЦИЯ "+d.Start+"\n− Было:\n"+d.Before+"\n+ Стало:\n"+d.After));});
+        var complete=ToolButton(comparisonBar,"Итоговый код",()=>{if(plan!=null){preview.TextWrapping=TextWrapping.NoWrap;preview.Text=plan.Result;}});compare.IsEnabled=complete.IsEnabled=false;
         void Clear(){plan=null;apply.IsEnabled=false;compare.IsEnabled=complete.IsEnabled=false;}
         void Try(Action action){try{action();}catch(Exception ex){Clear();status.Text=ex.Message;}}
         void Present(EditorPlan p)
@@ -99,6 +99,8 @@ public partial class QuestView
             captureComposerDraft?.Invoke();captureComposerDraft=null;
             CancelWorkbenchSearch();
             body.Children.Clear();Clear();preview.Clear();status.Text="Выберите действие.";
+            preview.TextWrapping=TextWrapping.NoWrap;
+            apply.Content="Применить изменения";compare.Content="Различия";complete.Content="Итоговый код";
             switch(navigation.SelectedIndex)
             {
                 case 0: Composer();break;
