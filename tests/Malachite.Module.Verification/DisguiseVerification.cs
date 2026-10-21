@@ -16,7 +16,7 @@ internal static class DisguiseVerification
         check(tip.Body.Contains("Поселковые") && tip.Body.Contains("иначе 0") && tip.Body.Contains("не меняет отношения") && tip.Body.Contains("minimum"),"disguise help shows argument, outcome and behavior limits");
         check(ReadableScenario.Describe(analysis,analysis.Blocks.Single(),help).Any(l=>l.Text.Contains("Одежда всех живых") && l.Text.Contains("Поселковые")),"disguise readable scenario explains profile condition");
         check(help.Script(analysis,analysis.Blocks.Single()).Body.Contains("соответствует профилю"),"disguise script tooltip decodes nested condition");
-        var view=new QuestView(new TestDocumentHost());
+        var view=TestViews.Create(new TestDocumentHost());
         try
         {
             view.LoadWorkspace(new Workspace {Name="disguise",Text="WorldScript(PartyDisg)"},false);

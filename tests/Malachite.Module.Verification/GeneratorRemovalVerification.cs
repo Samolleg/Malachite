@@ -17,7 +17,7 @@ internal static class GeneratorRemovalVerification
         var fields = typeof(QuestView).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
         check(!fields.Any(f => f.Name.Contains("generator", StringComparison.OrdinalIgnoreCase) ||
             f.Name == "localQwen"), "module lifecycle owns no generator or model state");
-        var view = new QuestView(new TestHost());
+        var view = TestViews.Create(new TestHost());
         try
         {
             check(view.FindName("GeneratorButton") == null,

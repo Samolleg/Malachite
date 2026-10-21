@@ -9,7 +9,7 @@ foreach ($name in @('ModuleContracts.V1.dll','ModuleContracts.Wpf.V1.dll')) {
 }
 $destination = [IO.Path]::GetFullPath($PackageDirectory)
 if (Test-Path -LiteralPath $destination) { throw 'Choose a new package directory; existing deliveries are immutable.' }
-& dotnet build (Join-Path $PSScriptRoot 'modules/Malachite.Module/Malachite.Module.csproj') -c Release "-p:ModuleSdkDir=$sdk" --nologo -v minimal
+& dotnet build (Join-Path $PSScriptRoot 'modules/Malachite.Module/Malachite.Module.csproj') -c Release "-p:ModuleSdkDir=$sdk" --nologo -v minimal -m:1 /nr:false /p:UseSharedCompilation=false
 if ($LASTEXITCODE -ne 0) { throw 'Module build failed.' }
 $output = Join-Path $PSScriptRoot 'modules/Malachite.Module/bin/Release/net9.0-windows'
 $files = @('Malachite.Module.dll','Malachite.Module.deps.json','Malachite.UI.Wpf.dll','Malachite.Core.dll','module.json')

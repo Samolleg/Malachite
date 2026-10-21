@@ -106,7 +106,7 @@ internal static class WorkbenchVerification
         dbReader.Current=new WorkspaceSnapshot(dbStamp,"disposable-db",false,
             [new RecordDto(new RecordRef(dbStamp.SessionId,dbStamp.Generation,"quests.quests",Guid.NewGuid()),
                 "qTest","Проверочный квест",[],[new TextDto("quest qTest","Проверочный квест","Найти свидетеля",false)])]);
-        var view=new QuestView(workbenchHost);
+        var view=TestViews.Create(workbenchHost);
         try
         {
             view.LoadWorkspace(new Workspace{Name="workbench",Text=source,Mob=mob},false);
@@ -162,7 +162,7 @@ internal static class WorkbenchVerification
             check(reopened.Text==editor.Text&&MobObjects.Read(reopened).Single().Id==205&&mob.Text=="WorldScript()","manual composer MOB roundtrip preserves objects and original bytes");
         }
         finally{view.Stop();}
-        var jumpView=new QuestView(new TestDocumentHost());
+        var jumpView=TestViews.Create(new TestDocumentHost());
         try
         {
             jumpView.LoadWorkspace(new Workspace{Name="jump",Text=source},false);
@@ -176,7 +176,7 @@ internal static class WorkbenchVerification
             check(atlas.Visibility==Visibility.Collapsed&&jumpEditor.CaretIndex==source.IndexOf("DeclareScript Task",StringComparison.Ordinal)&&typeof(QuestView).GetField("workbench",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(jumpView)==null,"workbench declaration jump reveals code and exact location [atlas="+atlas.Visibility+", caret="+jumpEditor.CaretIndex+", expected="+source.IndexOf("DeclareScript Task",StringComparison.Ordinal)+", overlay="+(typeof(QuestView).GetField("workbench",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(jumpView)!=null)+"]");
         }
         finally{jumpView.Stop();}
-        var draftView=new QuestView(new TestDocumentHost());
+        var draftView=TestViews.Create(new TestDocumentHost());
         try
         {
             void OpenTools()=>typeof(QuestView).GetMethod("Workbench_Click",BindingFlags.NonPublic|BindingFlags.Instance)!.Invoke(draftView,[draftView,new RoutedEventArgs()]);
@@ -199,7 +199,7 @@ internal static class WorkbenchVerification
         var questRef=new RecordRef(Guid.NewGuid(),1,"quests.quests",Guid.NewGuid());
         ((TestReader)dbHost.Workspace).Current=new WorkspaceSnapshot(new(questRef.SessionId,1,0),"quests",false,
             [new(questRef,"q0g","Квест",[],[new("quest q0g","Найти письмо","Начало\n#subobj 2\nВернуть письмо старосте\n",false)])]);
-        var dbView=new QuestView(dbHost);
+        var dbView=TestViews.Create(dbHost);
         try
         {
             dbView.LoadWorkspace(new Workspace{Name="db",Text=source},false);
@@ -212,7 +212,7 @@ internal static class WorkbenchVerification
             check(subs[0].Items.Count==1&&subs[0].Items[0]!.ToString()!.Contains("Вернуть письмо")&&Field("Ключ квеста для условия").Text=="q.gz1g.q0g.2"&&Field("Ключ выдаваемого квеста").Text=="q.gz1g.q0g.2","composer resolves DB quest and subobject titles to exact keys");
         }
         finally{dbView.Stop();}
-        var cancelHost=new CancelHost();var cancelView=new QuestView(cancelHost);
+        var cancelHost=new CancelHost();var cancelView=TestViews.Create(cancelHost);
         try
         {
             cancelView.LoadWorkspace(new Workspace{Name="cancel",Text="DeclareScript Target() Script Target(if()then(KillScript()))"},false);
@@ -235,7 +235,7 @@ internal static class WorkbenchVerification
         var searchHost=new SearchHost();
         byte[] firstBytes=mob.Encode("DeclareScript Target() Script Target(if()then(KillScript())) WorldScript(Target())"),secondBytes=mob.Encode("DeclareScript Target() Script Target(if()then(KillScript())) WorldScript(Target()) // second");
         searchHost.Browser.Files["first.mob"]=firstBytes;searchHost.Browser.Files["second.mob"]=secondBytes;
-        var searchView=new QuestView(searchHost);
+        var searchView=TestViews.Create(searchHost);
         try
         {
             searchView.LoadWorkspace(Workspace.FromBytes("first.mob",firstBytes),false);

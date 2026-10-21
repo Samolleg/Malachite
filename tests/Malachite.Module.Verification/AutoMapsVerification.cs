@@ -13,7 +13,7 @@ internal static class AutoMapsVerification
         SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
         try
         {
-            var host = new MapsHost(); var view = new QuestView(host);
+            var host = new MapsHost(); var view = TestViews.Create(host);
             host.Switch("db-a", "a.mob");
             Drain(view.SynchronizeMapsAsync());
             check(Maps(view).SequenceEqual(["a.mob"]) && host.Caches.ContainsKey("db-a"), "automatic discovery builds index and persists per-DB cache");
@@ -25,7 +25,7 @@ internal static class AutoMapsVerification
             Drain(view.SynchronizeMapsAsync());
             check(host.Discoveries == discovers, "ordinary DB edits do not restart indexing");
             view.Stop();
-            host.Switch("db-a", "a.mob"); var reopened = new QuestView(host);
+            host.Switch("db-a", "a.mob"); var reopened = TestViews.Create(host);
             Drain(reopened.SynchronizeMapsAsync());
             check(((TextBlock)reopened.FindName("StatusText")).Text.Contains("из кэша 1 · обработано 0"), "fresh module and reopened DB reuse portable index despite new session");
             var gate = new TaskCompletionSource<WorkspaceMapsResult>(); host.Gate = gate;

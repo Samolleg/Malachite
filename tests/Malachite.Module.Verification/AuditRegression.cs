@@ -14,7 +14,7 @@ internal static class AuditRegression
         var previous = SynchronizationContext.Current;
         SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
         var host = new ClosingHost(mob);
-        var view = new QuestView(host);
+        var view = TestViews.Create(host);
         try
         {
             ((Border)view.FindName("QuestAtlasPanel")).Visibility = Visibility.Visible;

@@ -373,7 +373,7 @@ public partial class QuestView
                 catch(Exception ex){if(Active())status.Text=ex.Message;}
                 finally{if(workbench==overlay&&!stopped){search.IsEnabled=true;searchKind.IsEnabled=true;if(request.IsCancellationRequested)status.Text="Поиск остановлен.";}if(ReferenceEquals(workbenchSearch,request))workbenchSearch=null;request.Dispose();}
             };
-            results.MouseDoubleClick+=(_,_)=>Try(()=>{if(results.SelectedItem is not UsageRow row)return;RecordNavigation(CodeEditor.CaretIndex);if(row.Path!=null){if(Host.Files is not IModuleFileBrowser browser)throw new InvalidDataException("Нет доступа к картам.");var file=browser.Read(row.Path);var w=Workspace.FromBytes(file.DisplayPath,file.Content.ToArray());if(w.Mob?.Hash!=row.Hash)throw new InvalidDataException("Карта изменилась. Повторите индексацию.");if(!CanLeave())return;LoadOpenedFile(file);}Close();GoToCode(row.Offset);});
+            results.MouseDoubleClick+=(_,_)=>Try(()=>{if(results.SelectedItem is not UsageRow row)return;RecordNavigation(CodeEditor.CaretIndex);if(row.Path!=null){if(Host.Files is not IModuleFileBrowser browser)throw new InvalidDataException("Нет доступа к картам.");EnsureIndexedTarget(row.Path);var file=browser.Read(row.Path);var w=Workspace.FromBytes(file.DisplayPath,file.Content.ToArray());if(w.Mob?.Hash!=row.Hash)throw new InvalidDataException("Карта изменилась. Повторите индексацию.");if(documentHost==null&&!CanLeave())return;LoadOpenedFile(file);}Close();GoToCode(row.Offset);});
         }
         navigation.SelectedIndex=0;
     }
@@ -427,7 +427,7 @@ public partial class QuestView
             if(p.Path.Length==0)throw new InvalidDataException("Несохранённый документ из истории уже закрыт.");
             if(Host.Files is not IModuleFileBrowser browser)throw new InvalidDataException("Нет доступа к карте из истории.");
             var file=browser.Read(p.Path);var w=Workspace.FromBytes(file.DisplayPath,file.Content.ToArray());if(p.Hash!=null&&w.Mob?.Hash!=p.Hash)throw new InvalidDataException("Карта из истории изменена; откройте её заново.");
-            if(!CanLeave())return;LoadOpenedFile(file);
+            if(documentHost==null&&!CanLeave())return;LoadOpenedFile(file);
         }
         replayingNavigation=true;try{GoToCode(p.Offset);navigationIndex=target;}finally{replayingNavigation=false;}
     }

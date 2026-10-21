@@ -8,7 +8,8 @@ namespace QuestStudio;
 
 internal sealed record RecoveryState(int Version, byte[] Project, string Code, bool CardDirty,
     string Conditions, string Actions, string Otherwise, string? SelectedName, string SavedText,
-    bool UseElse = false, int Caret = 0, Guid? DocumentId = null, string SaveArtifactKind = "malachite-project", AtlasRecovery? Atlas = null, WorkspaceReference? Source = null, bool HasDocument = true, bool Home = false);
+    bool UseElse = false, int Caret = 0, Guid? DocumentId = null, string SaveArtifactKind = "malachite-project", AtlasRecovery? Atlas = null, WorkspaceReference? Source = null, bool HasDocument = true, bool Home = false,
+    TabRecovery[]? Tabs = null, DocumentViewState? View = null);
 
 internal sealed record WorkspaceReference(string Name, string Path, int CodePage, byte[] Preamble, string MobHash);
 
@@ -38,6 +39,13 @@ public sealed class DocumentCodec : IDocumentCodec
             throw new InvalidDataException("Неполный снимок Малахита.");
         if (state.SaveArtifactKind is not ("mob" or "malachite-project" or "script-text"))
             throw new InvalidDataException("Неизвестный вид сохраняемого документа.");
+        if (state.Tabs?.Length > 64 || state.Tabs?.Any(t => t == null || t.State == null || t.View == null || t.State.Tabs?.Length > 0) == true)
+            throw new InvalidDataException("Некорректный список вкладок recovery.");
+        if (!state.HasDocument && state.Tabs?.Length > 0 || state.Tabs?.Any(t => !t.State.HasDocument || t.State.DocumentId == state.DocumentId) == true ||
+            state.Tabs?.Where(t => t.State.DocumentId != null).GroupBy(t => t.State.DocumentId).Any(g => g.Count() > 1) == true)
+            throw new InvalidDataException("Повторяющийся или отсутствующий документ во вкладках recovery.");
+        static bool InvalidView(DocumentViewState? view) => view != null && (view.Caret < 0 || view.SelectionLength < 0 || !double.IsFinite(view.Vertical) || !double.IsFinite(view.Horizontal) || view.Vertical < 0 || view.Horizontal < 0 || view.Search == null || view.Mode == null || view.Layout == null);
+        if (InvalidView(state.View) || state.Tabs?.Any(t => InvalidView(t.View)) == true) throw new InvalidDataException("Некорректная позиция вкладки recovery.");
         Workspace workspace;
         if (state.Version == 3)
         {

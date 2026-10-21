@@ -15,7 +15,7 @@ internal static class EditorPerformance
         foreach (int lines in new[] { 8000 })
         foreach (string phase in new[] { "all", "all", "no-syntax", "no-completion", "native" })
         {
-            var host = new TestDocumentHost(); var view = new QuestView(host);
+            var host = new TestDocumentHost(); var view = TestViews.Create(host);
             var text = "WorldScript(\r\n" + string.Concat(Enumerable.Range(0, lines).Select(i => $"\tGSSetVar(0, \"key{i}\", 1)\r\n")) + ")";
             view.LoadWorkspace(new Workspace { Name = "benchmark", Text = text }, false);
             typeof(QuestView).GetMethod("Code_Click", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(view, [view, new RoutedEventArgs()]);

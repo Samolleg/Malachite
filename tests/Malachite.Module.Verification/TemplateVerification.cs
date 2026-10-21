@@ -38,7 +38,7 @@ internal static class TemplateVerification
         Reject(Options(ScriptTemplateKind.Once) with {Actions="UnknownCommand()"},"reject unrecognized action");
         var repeat=ScriptTemplates.Build(source,Options(ScriptTemplateKind.Repeat),registry);
         check(repeat.Text.Contains("Sleep(10)") && repeat.Text.IndexOf("Sleep(10)")<repeat.Text.LastIndexOf("Task()"),"repeat schedules next instance after bounded pause");
-        var view=new QuestView(new TestDocumentHost());
+        var view=TestViews.Create(new TestDocumentHost());
         try
         {
             view.LoadWorkspace(new Workspace{Name="templates",Text=source},false);

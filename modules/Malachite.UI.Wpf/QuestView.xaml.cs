@@ -42,11 +42,17 @@ public partial class QuestView : UserControl
     string mode = "scripts", savedText = Workspace.Demo;
     public sealed record NavRow(string Title, string Subtitle, string Kind, object Value);
     public sealed record UsageRow(string Text, int Offset, string? Path = null, string? Hash = null) { public override string ToString() => Text; }
-    public sealed record IndexedMap(string Path, string Hash, List<FlagUse> Flags) { public QuestMap? Quests { get; init; } }
+    public sealed record IndexedMap(string Path, string Hash, List<FlagUse> Flags)
+    {
+        public QuestMap? Quests { get; init; }
+        public int? ScriptCount { get; init; }
+        public int? ObjectCount { get; init; }
+    }
 
-    public QuestView(DatabaseEditor.Modules.V1.IModuleHost host)
+    public QuestView(DatabaseEditor.Modules.V1.IModuleHost host, string? catalogPath = null)
     {
         Host = host;
+        catalog = new MapCatalogStore(catalogPath ?? MapCatalogStore.DefaultPath);
         Help = new HelpService(Registry);
         InitializeComponent();
         debounce.Tick += (_, _) => { debounce.Stop(); RefreshAnalysisInBackground(); };
@@ -82,6 +88,11 @@ public partial class QuestView : UserControl
             e.Handled = true; return;
         }
         if (e.Handled) return;
+        if (e.Key == Key.Tab && (Keyboard.Modifiers == ModifierKeys.Control || Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift)) && activeTab != null)
+        {
+            int direction = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1;
+            SwitchDocument(openTabs[(openTabs.IndexOf(activeTab) + direction + openTabs.Count) % openTabs.Count].Id); e.Handled = true; return;
+        }
         if (e.Key == Key.F3) { FindInCode(Keyboard.Modifiers == ModifierKeys.Shift); e.Handled = true; return; }
         if (e.Key == Key.F5) { Check_Click(sender, e); e.Handled = true; }
         if (e.Key == Key.F1 && !cardDirty)
@@ -95,7 +106,8 @@ public partial class QuestView : UserControl
         if (e.Key == Key.Enter && CodeEditor.IsKeyboardFocusWithin) { NavigateSelectedDatabaseReference(); e.Handled = true; }
         if (e.Key == Key.O) { Open_Click(sender, e); e.Handled = true; }
         if (e.Key == Key.S) { RunCommand(DatabaseEditor.Modules.V1.ModuleCommand.Save); e.Handled = true; }
-        if (e.Key is Key.Z or Key.Y && (FindText.IsKeyboardFocusWithin || ReplaceText.IsKeyboardFocusWithin || HomeSearch.IsKeyboardFocusWithin || SearchBox.IsKeyboardFocusWithin)) return;
+        if (e.Key == Key.W && documentId != null) { CloseDocumentTab(documentId.Value); e.Handled = true; }
+        if (e.Key is Key.Z or Key.Y && (FindText.IsKeyboardFocusWithin || ReplaceText.IsKeyboardFocusWithin || HomeSearch.IsKeyboardFocusWithin || HomeNote.IsKeyboardFocusWithin || SearchBox.IsKeyboardFocusWithin)) return;
         if (e.Key == Key.Z) { RunCommand(DatabaseEditor.Modules.V1.ModuleCommand.Undo); e.Handled = true; }
         if (e.Key == Key.Y) { RunCommand(DatabaseEditor.Modules.V1.ModuleCommand.Redo); e.Handled = true; }
         if (e.Key == Key.H) { ShowFind(true); e.Handled = true; }
@@ -176,7 +188,7 @@ public partial class QuestView : UserControl
         Selected = selectedName == null ? null : Current.Blocks.FirstOrDefault(b => b.Name.Equals(selectedName, StringComparison.OrdinalIgnoreCase));
         if (textChanged && !chooseFirst && !cardDirty && mode == "scripts") Selected = Current.BlockAt(CodeEditor.CaretIndex) ?? Selected;
         if (Selected == null && chooseFirst) Selected = Current.Blocks.FirstOrDefault(b => !b.World) ?? Current.Blocks.FirstOrDefault();
-        DocumentSummary.Text = $"{Current.Blocks.Count(b => !b.World)} этапов  /  {Current.Calls.Count} вызовов  /  {Current.Flags.Select(f => (f.Context, f.Key)).Distinct().Count()} GS-ключей";
+        DocumentSummary.Text = $"{CountLabel(Current.Blocks.Count(b => !b.World), "скрипт", "скрипта", "скриптов")}  /  {CountLabel(Current.Calls.Count, "вызов", "вызова", "вызовов")}  /  {Current.Flags.Select(f => (f.Context, f.Key)).Distinct().Count()} GS-ключей";
         int errors = Current.Issues.Count(i => i.Severity == "error"), warnings = Current.Issues.Count(i => i.Severity == "warning");
         CheckSummary.Text = $"JamaisVu · {Registry.AddonReleaseCount} команд аддона · {errors} ошибок · {warnings} предупреждений · без запуска движка";
         Diagnostics.ItemsSource = Current.Issues.Take(500).ToList();
@@ -187,6 +199,7 @@ public partial class QuestView : UserControl
         dirty = Workspace.Text != savedText;
         Title = $"{(dirty ? "● " : "")}{Workspace.Name} — Малахит";
         SetStatus($"Проверка обновлена · {errors} ошибок · {warnings} предупреждений.");
+        ExplainAt(CodeEditor.CaretIndex); RefreshDocumentTabs();
     }
     void SetStatus(string text) { StatusText.Text = text; if (HomePanel?.Visibility == Visibility.Visible) UpdateHomeMaps(); }
     public HoverHelp? HelpAt(TextBox editor, int position)
@@ -252,16 +265,17 @@ public partial class QuestView : UserControl
         if (GraphRow == null || EditorArea == null || DiagnosticsRow == null) return;
         double viewport = Surface.ActualHeight - Surface.RowDefinitions[0].ActualHeight - Surface.RowDefinitions[2].ActualHeight - EditorArea.Margin.Top - EditorArea.Margin.Bottom;
         double available = viewport - EditorArea.RowDefinitions[0].ActualHeight - 13;
-        DiagnosticsRow.MaxHeight = Math.Max(70, available - 180);
-        GraphRow.MaxHeight = Math.Max(0, available - 180 - Math.Min(DiagnosticsRow.Height.Value, DiagnosticsRow.MaxHeight));
+        CodeRow.MinHeight = scenarioOnly ? 0 : Math.Min(180, Math.Max(154, available - DiagnosticsRow.Height.Value));
+        DiagnosticsRow.MaxHeight = Math.Max(checksHidden ? 36 : 70, available - (scenarioOnly ? 0 : CodeRow.MinHeight));
+        GraphRow.MaxHeight = scenarioOnly ? double.PositiveInfinity : Math.Max(0, available - CodeRow.MinHeight - Math.Min(DiagnosticsRow.Height.Value, DiagnosticsRow.MaxHeight));
     }
     void Surface_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         if (Tagline == null) return;
         Tagline.Visibility = e.NewSize.Width < 1280 ? Visibility.Collapsed : Visibility.Visible;
-        SidebarColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 210 : 236);
-        InspectorColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 280 : 325);
-        if (!codeOnly) GraphRow.Height = new GridLength(readable ? (e.NewSize.Height < 800 ? 280 : 420) : (e.NewSize.Height < 800 ? 190 : 290));
+        if (!sidebarHidden) SidebarColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 210 : 236);
+        if (!inspectorHidden) InspectorColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 280 : 325);
+        if (!codeOnly && !scenarioOnly) GraphRow.Height = new GridLength(readable ? (e.NewSize.Height < 800 ? 280 : 420) : (e.NewSize.Height < 800 ? 190 : 290));
         if (Current != null) RenderGraph();
     }
     void Code_Changed(object sender, TextChangedEventArgs e)
@@ -275,6 +289,7 @@ public partial class QuestView : UserControl
         if (syntax != null) { syntax.Visibility = Visibility.Hidden; CodeEditor.Foreground = MalachiteTheme.Text; }
         ScheduleEditorFeedback();
         PublishDocument("Ввод сценария");
+        ExplainAt(CodeEditor.CaretIndex); RefreshDocumentTabs();
     }
     void Caret_Changed(object sender, RoutedEventArgs e)
     {
@@ -288,6 +303,7 @@ public partial class QuestView : UserControl
             if (call != null && Registry.Commands.TryGetValue(call.Name, out var cmd)) ShowCommand(cmd);
         }
         else if (mode == "scripts") SyncSelectionToCaret();
+        ExplainAt(CodeEditor.CaretIndex);
     }
     void SyncSelectionToCaret()
     {
@@ -354,22 +370,28 @@ public partial class QuestView : UserControl
     }
     void GoToCode(int offset)
     {
-        if (QuestAtlasPanel.Visibility == Visibility.Visible || ScenarioPanel.Visibility == Visibility.Visible) Code_Click(this, new RoutedEventArgs());
+        if (QuestAtlasPanel.Visibility == Visibility.Visible) Code_Click(this, new RoutedEventArgs());
+        else if (scenarioOnly) Scenario_Click(this, new RoutedEventArgs());
         GoTo(offset);
     }
     void GoTo(int offset)
     {
         if (navigationIndex < 0 || (navigationHistory[navigationIndex].Path == (Workspace.SourcePath ?? "") && navigationHistory[navigationIndex].Name == Workspace.Name)) RecordNavigation(CodeEditor.CaretIndex);
         offset = Math.Clamp(offset, 0, CodeEditor.Text.Length);
+        // Mode changes can shrink the native viewport. Lay it out before the
+        // scroll request, otherwise WPF clamps against the preceding mode.
+        UpdateLayout();
         internalUpdate = true; CodeEditor.Focus(); CodeEditor.CaretIndex = offset;
         CodeEditor.ScrollToLine(Math.Max(0, CodeEditor.GetLineIndexFromCharacterIndex(offset) - 2)); internalUpdate = false;
         SyncSelectionToCaret();
         RecordNavigation(offset);
+        ExplainAt(offset);
     }
     void FillCard(ScriptBlock block)
     {
         internalUpdate = true;
         CardPanel.Visibility = Visibility.Visible; HelpPanel.Visibility = Visibility.Collapsed;
+        ExplanationContent.Visibility = Visibility.Visible;
         InspectorTitle.Text = block.Display;
         InspectorTitle.ToolTip = MakeTip(Help.Script(Current, block));
         InspectorHint.Text = block.World ? "Стартовые команды карты. Редактируйте их в коде; ниже можно добавить вызов этапа." : block.CardEditable ? "Одна ветка условий. Карточка изменяет только выбранные фрагменты кода." : "Сложная структура. Правьте код: автоматическая перестройка такого Script отключена.";
@@ -431,6 +453,7 @@ public partial class QuestView : UserControl
     }
     void ShowHelp(HoverHelp help)
     {
+        ExplanationContent.Visibility = Visibility.Collapsed;
         CardPanel.Visibility = Visibility.Collapsed; HelpPanel.Visibility = Visibility.Visible;
         InspectorTitle.Text = help.Title; InspectorTitle.ToolTip = MakeTip(help); InspectorHint.Text = help.Kind;
         SignatureText.Text = help.Title; HelpText.Text = help.Body; HelpProvenance.Text = help.Source;
@@ -438,6 +461,7 @@ public partial class QuestView : UserControl
     }
     void ShowFlag(List<FlagUse> uses)
     {
+        ExplanationContent.Visibility = Visibility.Collapsed;
         var first = uses[0]; CardPanel.Visibility = Visibility.Collapsed; HelpPanel.Visibility = Visibility.Visible;
         InspectorTitle.Text = first.Key; InspectorHint.Text = "GS-переменная · буквальный ключ";
         SignatureText.Text = "Контекст: " + first.Context;
@@ -455,10 +479,11 @@ public partial class QuestView : UserControl
             try
             {
                 if (Host.Files is not IModuleFileBrowser browser) throw new InvalidOperationException("Хост не поддерживает чтение связанных MOB.");
+                EnsureIndexedTarget(row.Path);
                 var file = browser.Read(row.Path);
                 var workspace = Workspace.FromBytes(file.DisplayPath, file.Content.ToArray());
                 if (workspace.Mob?.Hash != row.Hash) throw new IOException("Карта изменилась после индексации. Заново откройте папку MOB.");
-                if (!CanLeave()) return;
+                if (documentHost == null && !CanLeave()) return;
                 LoadOpenedFile(file);
             }
             catch (Exception ex) { Error(ex); return; }
@@ -480,19 +505,20 @@ public partial class QuestView : UserControl
     }
     void New_Click(object sender, RoutedEventArgs e)
     {
-        if (!CanLeave()) return;
+        if (documentHost == null && !CanLeave()) return;
+        if (documentHost != null) { if (openTabs.Count >= 64) { SetStatus("Закройте одну из 64 открытых вкладок."); return; } SuspendCurrentDocument(); }
         LoadWorkspace(new() { Name = "Новая цепочка", Text = "GlobalVars\r\n(\r\n  Heroes : group\r\n)\r\n\r\nWorldScript\r\n(\r\n)\r\n" }, true);
     }
     void Open_Click(object sender, RoutedEventArgs e)
     {
-        if (!CanLeave()) return;
+        if (documentHost == null && !CanLeave()) return;
         try { var file = Host.Files.Open("Сценарии и проекты|*.mob;*.txt;*.scr;*.malachite");
             if (file is not null) LoadOpenedFile(file); }
         catch (Exception ex) { Error(ex); }
     }
     public void OpenPath(string path)
     {
-        if (!CanLeave()) return;
+        if (documentHost == null && !CanLeave()) return;
         try { if (Host.Files is not IModuleFileBrowser browser) throw new InvalidOperationException("Хост не поддерживает чтение по разрешённому пути."); LoadOpenedFile(browser.Read(path)); }
         catch (Exception ex) { Error(ex); }
     }
@@ -582,14 +608,14 @@ public partial class QuestView : UserControl
         foreach (var path in files)
         {
             cancellation.ThrowIfCancellationRequested();
-            try { var file = browser.Read(path); cancellation.ThrowIfCancellationRequested(); var document = Workspace.FromBytes(file.DisplayPath, file.Content.ToArray()); var analysis = ScriptAnalyzer.Analyze(document.Text, registry); cancellation.ThrowIfCancellationRequested(); maps.Add(new(path, document.Mob!.Hash, analysis.Flags) { Quests = QuestAtlas.Read(analysis, path, document.Mob.Hash) }); }
+            try { var file = browser.Read(path); cancellation.ThrowIfCancellationRequested(); var document = Workspace.FromBytes(file.DisplayPath, file.Content.ToArray()); var analysis = ScriptAnalyzer.Analyze(document.Text, registry); cancellation.ThrowIfCancellationRequested(); maps.Add(MapIndexCache.Describe(document, analysis, path, document.Mob!.Hash)); }
             catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is UnauthorizedAccessException || ex is DecoderFallbackException) { errors.Add(System.IO.Path.GetFileName(path) + ": " + ex.Message); }
             progress?.Invoke(maps.Count + errors.Count, System.IO.Path.GetFileName(path));
         }
         return (maps, errors);
     }
-    void Mixed_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Collapsed; readable = false; ScenarioPanel.Visibility = Visibility.Collapsed; GraphPanel.Visibility = Visibility.Visible; codeOnly = false; GraphRow.Height = new GridLength(Surface.ActualHeight < 800 ? 190 : 290); RenderGraph(); }
-    void Code_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Collapsed; codeOnly = true; ScenarioPanel.Visibility = GraphPanel.Visibility = Visibility.Collapsed; GraphRow.Height = new GridLength(0); }
+    void Mixed_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Collapsed; readable = false; ScenarioPanel.Visibility = Visibility.Collapsed; GraphPanel.Visibility = Visibility.Visible; codeOnly = false; ShowCodeArea(); GraphRow.Height = new GridLength(Surface.ActualHeight < 800 ? 190 : 290); RenderGraph(); }
+    void Code_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Collapsed; codeOnly = true; ScenarioPanel.Visibility = GraphPanel.Visibility = Visibility.Collapsed; ShowCodeArea(); GraphRow.Height = new GridLength(0); }
 
     public void RenderGraph()
     {

@@ -23,7 +23,7 @@ internal static class TextEditingVerification
     }
     public static void Run(Action<bool,string> check, string output)
     {
-        var view = new QuestView(new TestDocumentHost());
+        var view = TestViews.Create(new TestDocumentHost());
         try
         {
             void Click(string method) => typeof(QuestView).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(view,[view,new RoutedEventArgs()]);

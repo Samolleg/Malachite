@@ -42,15 +42,16 @@ public partial class QuestView
         documentId = document.DocumentId;
         acceptedRevision = document.Revision; publishConflict = false;
         CodeEditor.IsUndoEnabled = false;
+        AddActiveTab();
     }
     void CloseCurrentDocument()
     {
         if (documentHost == null || documentId == null || suppressPublish) return;
         // Host recovery can replace the temporary document before module reattachment.
-        if (documentHost.Documents.Get(documentId.Value) == null) { documentId = null; return; }
+        if (documentHost.Documents.Get(documentId.Value) == null) { openTabs.RemoveAll(t => t.Id == documentId); activeTab = null; documentId = null; RefreshDocumentTabs(); return; }
         var result = documentHost.Documents.Close(documentId.Value, acceptedRevision, true);
         if (!result.Succeeded) throw new InvalidOperationException(result.Message);
-        documentId = null;
+        openTabs.RemoveAll(t => t.Id == documentId); activeTab = null; documentId = null; RefreshDocumentTabs();
     }
     void DetachDocumentHost()
     {
@@ -72,14 +73,29 @@ public partial class QuestView
             ReportResult(result);
             // Keep rejected input in the view/recovery. Never silently replace it with a stale host snapshot.
         }
-        finally { publishing = false; }
+        finally { publishing = false; RefreshDocumentTabs(); }
     }
     void DocumentChanged(object? sender, DocumentEvent e)
     {
-        if (stopped || e.DocumentId != documentId || publishing) return;
+        if (stopped || publishing) return;
         if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(() => DocumentChanged(sender, e)); return; }
         var snapshot = documentHost?.Documents.Get(e.DocumentId);
         if (snapshot == null) return;
+        if (e.DocumentId != documentId)
+        {
+            var tab = openTabs.FirstOrDefault(t => t.Id == e.DocumentId);
+            if (tab == null || tab.Conflict) return;
+            try
+            {
+                var (state, workspace) = DocumentCodec.Decode(snapshot.State.AsSpan(), snapshot.Text, documentBlobs);
+                tab.State = state with { SavedText = snapshot.IsDirty ? state.SavedText : snapshot.Text }; tab.Workspace = workspace;
+                tab.Dirty = snapshot.IsDirty || state.CardDirty;
+                if (historyCommand) SwitchDocument(tab.Id);
+                RefreshDocumentTabs();
+            }
+            catch (Exception ex) { Host.Report("Не удалось обновить вкладку: " + ex.Message); }
+            return;
+        }
         if (publishConflict) { Host.Report("Локальный ввод конфликтует с сеансом; он сохранён в recovery и не заменён автоматически."); return; }
         try
         {
@@ -111,17 +127,25 @@ public partial class QuestView
             if (!snapshot.IsDirty) savedText = CodeEditor.Text;
             dirty = snapshot.IsDirty;
             acceptedRevision = snapshot.Revision;
+            RefreshDocumentTabs();
         }
         catch (Exception ex) { Host.Report("Не удалось принять изменение сценария: " + ex.Message); }
     }
     public void LoadOpenedFile(OpenedFile file)
     {
+        if (documentHost != null && UseExistingTab(file.DisplayPath)) { RememberOpenedMap(file.DisplayPath); return; }
         var workspace = Workspace.FromBytes(file.DisplayPath, file.Content.ToArray());
-        CloseCurrentDocument();
+        if (documentHost != null)
+        {
+            if (openTabs.Count >= 64) throw new InvalidOperationException("Открыто 64 файла. Закройте одну вкладку перед открытием следующей.");
+            SuspendCurrentDocument();
+        }
+        else CloseCurrentDocument();
         suppressPublish = true;
         try { LoadWorkspace(workspace, false); }
         finally { suppressPublish = false; }
         saveArtifactKind = ArtifactForPath(file.DisplayPath);
         RegisterCurrentDocument(file.SourceToken == Guid.Empty ? null : file.SourceToken, false);
+        RememberOpenedMap(file.DisplayPath);
     }
 }

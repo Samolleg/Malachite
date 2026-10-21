@@ -70,5 +70,6 @@ public partial class QuestView
         foreach (var hover in hovers) hover.Close();
         RenderScenario();
         RefreshQuestAtlas();
+        explainedAnalysis = null; ExplainAt(CodeEditor.CaretIndex);
     }
 }

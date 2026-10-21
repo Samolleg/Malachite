@@ -133,9 +133,10 @@ public partial class QuestView
             try
             {
                 if (Host.Files is not DatabaseEditor.Modules.V1.IModuleFileBrowser browser) throw new IOException("Выберите папку MOB через хост.");
+                EnsureIndexedTarget(point.Map);
                 var file = browser.Read(point.Map); var target = Workspace.FromBytes(file.DisplayPath, file.Content.ToArray());
                 if (target.Mob?.Hash != point.Hash) throw new IOException("MOB изменён после индексации. Заново выберите папку MOB.");
-                if (!CanLeave()) return;
+                if (documentHost == null && !CanLeave()) return;
                 LoadOpenedFile(file);
             }
             catch (Exception ex) { Host.Report(ex.Message); return; }

@@ -10,20 +10,22 @@ using QuestStudio;
 internal static class TestViews
 {
     // Explicit fixture: the product no longer loads a tutorial at startup.
-    public static QuestView Demo(IModuleHost host) { var view = new QuestView(host); view.LoadWorkspace(new Workspace(), false); return view; }
+    static readonly string CatalogPath = Path.Combine(Path.GetTempPath(), "malachite-verification-" + Guid.NewGuid().ToString("N"), "map-catalog.json");
+    public static QuestView Create(IModuleHost host) => new QuestView(host, CatalogPath);
+    public static QuestView Demo(IModuleHost host) { var view = Create(host); view.LoadWorkspace(new Workspace(), false); return view; }
 }
 internal static class HomeVerification
 {
     public static void Run(Action<bool, string> check, string output)
     {
-        var host = new TestDocumentHost(); var view = new QuestView(host);
+        var host = new TestDocumentHost(); var view = TestViews.Create(host);
         check(((Grid)view.FindName("HomePanel")).Visibility == Visibility.Visible && ((Grid)view.FindName("EditorSurface")).Visibility == Visibility.Collapsed,
             "startup displays map picker instead of tutorial editor");
         check(view.DocumentId == null && host.List("malachite").Length == 0 && view.Current.Blocks.Count == 0 && !view.HasPendingChanges,
             "startup has no tutorial code or phantom host document");
         check(!((Button)view.FindName("CopiesButton")).IsEnabled && !((Button)view.FindName("SaveChangesButton")).IsEnabled,
             "document actions disabled before a map opens");
-        byte[] state = view.CaptureState(); var restored = new QuestView(new TestDocumentHost());
+        byte[] state = view.CaptureState(); var restored = TestViews.Create(new TestDocumentHost());
         check(restored.RestoreState(state).Succeeded && restored.DocumentId == null && !restored.HasPendingChanges,
             "start screen recovery does not invent an editable document"); restored.Stop();
         var files = (List<string>)typeof(QuestView).GetField("folderFiles", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(view)!;
@@ -87,7 +89,7 @@ internal static class HomeVerification
         typeof(QuestView).GetMethod("Home_Click", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(view, [view, new RoutedEventArgs()]);
         check(((QuestView.HomeMap)list.SelectedItem).Path == selectedPath && ((QuestView.HomeMap)list.SelectedItem).ModifiedUtc == modified.AddHours(1), "return to maps refreshes changed date while preserving selected map");
         check(view.HasPendingChanges && code.Text.EndsWith("// unsaved"), "returning to maps preserves unsaved code");
-        state = view.CaptureState(); var pending = new QuestView(new TestDocumentHost());
+        state = view.CaptureState(); var pending = TestViews.Create(new TestDocumentHost());
         check(pending.RestoreState(state).Succeeded && pending.HasPendingChanges && ((Grid)pending.FindName("HomePanel")).Visibility == Visibility.Visible,
             "recovery preserves pending document while map picker is shown"); pending.Stop();
         var menu = ((Button)view.FindName("CopiesButton")).ContextMenu;

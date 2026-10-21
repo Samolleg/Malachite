@@ -45,7 +45,7 @@ public static class MapIndexCache
                     var document = Workspace.FromBytes(path, file.Content.ToArray());
                     if (document.Mob == null) throw new InvalidDataException("Файл не является MOB.");
                     var analysis = ScriptAnalyzer.Analyze(document.Text, registry); cancellation.ThrowIfCancellationRequested();
-                    item = new(path, hash, new(path, hash, analysis.Flags) { Quests = QuestAtlas.Read(analysis, path, hash) }, null);
+                    item = new(path, hash, Describe(document, analysis, path, hash), null);
                 }
                 next.Add(item);
                 if (item.Map != null) maps.Add(item.Map);
@@ -62,6 +62,13 @@ public static class MapIndexCache
         return new(maps.ToArray(), errors.ToArray(), JsonSerializer.SerializeToUtf8Bytes(new Snapshot(Schema, next.ToArray(), ParserVersion)), parsed, reused);
     }
 
+    internal static QuestView.IndexedMap Describe(Workspace document, Analysis analysis, string path, string hash)
+    {
+        int? objects = null;
+        try { if (document.Mob != null) objects = MobObjects.Read(document.Mob).Count; }
+        catch (Exception ex) when (ex is InvalidDataException or InvalidOperationException or OverflowException) { }
+        return new(path, hash, analysis.Flags) { Quests = QuestAtlas.Read(analysis, path, hash), ScriptCount = analysis.Blocks.Count(b => !b.World), ObjectCount = objects };
+    }
     static bool Valid(Item item) => item.Map == null ? !string.IsNullOrEmpty(item.Error) :
         item.Map.Path == item.Path && item.Map.Hash == item.Hash && item.Map.Flags != null &&
         item.Map.Quests is { Points: not null, Calls: not null, Briefings: not null } q && q.Path == item.Path && q.Hash == item.Hash &&

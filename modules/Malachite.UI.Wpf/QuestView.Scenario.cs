@@ -10,7 +10,9 @@ public partial class QuestView
     {
         QuestAtlasPanel.Visibility = Visibility.Collapsed;
         readable = true; codeOnly = false; GraphRow.Height = new GridLength(360);
+        ShowCodeArea();
         ScenarioPanel.Visibility = Visibility.Visible; GraphPanel.Visibility = Visibility.Collapsed;
+        UpdateModeButtons();
         RenderScenario();
     }
     void RenderScenario()
@@ -39,8 +41,10 @@ public partial class QuestView
             var button = new Button { Content = text, HorizontalContentAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(10 + Math.Min(line.Depth, 8) * 18, 3, 10, 3), Padding = new Thickness(10, 8, 10, 8),
                 ToolTip = "Показать соответствующую строку исходного кода", Foreground = line.Caution ? MalachiteTheme.Warning : MalachiteTheme.Text };
-            button.Click += (_, _) => GoToCode(line.Offset);
+            button.Tag = line.Offset;
+            button.Click += (_, _) => SelectScenarioAction(line.Offset);
             ScenarioItems.Children.Add(button);
         }
+        HighlightScenario();
     }
 }
