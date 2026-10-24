@@ -27,7 +27,7 @@ public partial class QuestView
     bool historyCommand;
     DocumentViewState CaptureDocumentView() => new(CodeEditor.SelectionStart, CodeEditor.SelectionLength,
         CodeEditor.VerticalOffset, CodeEditor.HorizontalOffset, mode, SearchBox.Text,
-        QuestAtlasPanel.Visibility == Visibility.Visible ? "quests" : codeOnly ? "code" : !readable ? "links" : scenarioOnly ? "scenario" : "together");
+        QuestAtlasPanel.Visibility == Visibility.Visible ? "quests" : "code");
     RecoveryState CaptureTabState() => new(2, [], CodeEditor.Text, cardDirty, ConditionBox.Text, ActionBox.Text,
         ElseBox.Text, Selected?.Name, savedText, UseElse.IsChecked == true, CodeEditor.CaretIndex, documentId, saveArtifactKind);
     void CaptureActiveTab()
@@ -88,11 +88,8 @@ public partial class QuestView
         SearchBox.Text = view.Search; FillNavigation();
         switch (view.Layout)
         {
-            case "code": Code_Click(this, new()); break;
-            case "scenario": ReadableOnly_Click(this, new()); break;
-            case "links": Mixed_Click(this, new()); break;
             case "quests": Atlas_Click(this, new()); break;
-            default: Scenario_Click(this, new()); break;
+            default: Code_Click(this, new()); break;
         }
         internalUpdate = true;
         try { CodeEditor.Select(Math.Clamp(view.Caret, 0, CodeEditor.Text.Length), Math.Clamp(view.SelectionLength, 0, CodeEditor.Text.Length - Math.Clamp(view.Caret, 0, CodeEditor.Text.Length))); }

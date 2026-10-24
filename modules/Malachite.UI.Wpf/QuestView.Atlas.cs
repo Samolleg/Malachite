@@ -118,8 +118,8 @@ public partial class QuestView
         public string Group => Indirect ? "Через брифинги · косвенно" : "В скриптах MOB · напрямую";
         public override string ToString() => Title + " · " + Key;
     }
-    void Atlas_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Visible; RefreshQuestAtlas(); }
-    void AtlasClose_Click(object sender, RoutedEventArgs e) => QuestAtlasPanel.Visibility = Visibility.Collapsed;
+    void Atlas_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Visible; CodeButton.BorderBrush = (Brush)FindResource("Line"); RefreshQuestAtlas(); }
+    void AtlasClose_Click(object sender, RoutedEventArgs e) => Code_Click(sender, e);
     void AtlasSelection_Changed(object sender, SelectionChangedEventArgs e) { if (!atlasUpdating && AtlasQuests.SelectedItem is AtlasQuest quest) { atlasQuest = quest.Key; RefreshQuestAtlas(); } }
     void AtlasScope_Changed(object sender, RoutedEventArgs e) => RefreshQuestAtlas();
     public void NavigateQuestPoint(QuestPoint point)

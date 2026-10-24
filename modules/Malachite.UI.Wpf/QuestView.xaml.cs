@@ -7,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using DatabaseEditor.Modules.V1;
 
@@ -27,7 +26,6 @@ public partial class QuestView : UserControl
     bool internalUpdate, dirty, cardDirty, navigating;
     SyntaxLayer? syntax;
     readonly List<HoverController> hovers = [];
-    bool codeOnly;
     readonly List<IndexedMap> indexedMaps = [];
     int folderVersion;
     bool folderIndexing;
@@ -142,7 +140,7 @@ public partial class QuestView : UserControl
         Workspace = workspace; CodeEditor.IsUndoEnabled = false; CodeEditor.Text = workspace.Text; CodeEditor.IsUndoEnabled = documentHost == null; CodeEditor.IsReadOnly = false;
         mode = "scripts"; SearchBox.Text = "";
         cardDirty = false; Selected = null; savedText = modified ? "" : workspace.Text; dirty = modified;
-        internalUpdate = false; RefreshAnalysis(true); Scenario_Click(this, new RoutedEventArgs());
+        internalUpdate = false; RefreshAnalysis(true); Code_Click(this, new RoutedEventArgs());
         ProjectName.Text = workspace.Name; DocumentTitle.Text = workspace.Name;
         EncodingText.Text = workspace.Mob != null ? "MOB · Windows-1251 · Ctrl+S — сохранить" : $"{workspace.TextEncoding.WebName} · Ctrl+S — сохранить";
         if (Selected != null) GoTo(Selected.Start);
@@ -193,7 +191,7 @@ public partial class QuestView : UserControl
         CheckSummary.Text = $"JamaisVu · {Registry.AddonReleaseCount} команд аддона · {errors} ошибок · {warnings} предупреждений · без запуска движка";
         Diagnostics.ItemsSource = Current.Issues.Take(500).ToList();
         if (Current.Issues.Count == 0) Diagnostics.ItemsSource = new[] { new Issue("info", "CLEAN", "В рамках локальных правил замечаний нет. Результат не заменяет компиляцию движком.", 0, 1) };
-        FillNavigation(); RenderGraph();
+        FillNavigation();
         RefreshQuestAtlas();
         if (!cardDirty && Selected != null && mode == "scripts") FillCard(Selected);
         dirty = Workspace.Text != savedText;
@@ -262,12 +260,11 @@ public partial class QuestView : UserControl
     void DiagnosticsPanel_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateEditorBounds();
     void UpdateEditorBounds()
     {
-        if (GraphRow == null || EditorArea == null || DiagnosticsRow == null) return;
+        if (EditorArea == null || DiagnosticsRow == null) return;
         double viewport = Surface.ActualHeight - Surface.RowDefinitions[0].ActualHeight - Surface.RowDefinitions[2].ActualHeight - EditorArea.Margin.Top - EditorArea.Margin.Bottom;
         double available = viewport - EditorArea.RowDefinitions[0].ActualHeight - 13;
-        CodeRow.MinHeight = scenarioOnly ? 0 : Math.Min(180, Math.Max(154, available - DiagnosticsRow.Height.Value));
-        DiagnosticsRow.MaxHeight = Math.Max(checksHidden ? 36 : 70, available - (scenarioOnly ? 0 : CodeRow.MinHeight));
-        GraphRow.MaxHeight = scenarioOnly ? double.PositiveInfinity : Math.Max(0, available - CodeRow.MinHeight - Math.Min(DiagnosticsRow.Height.Value, DiagnosticsRow.MaxHeight));
+        CodeRow.MinHeight = Math.Min(180, Math.Max(154, available - DiagnosticsRow.Height.Value));
+        DiagnosticsRow.MaxHeight = Math.Max(checksHidden ? 36 : 70, available - CodeRow.MinHeight);
     }
     void Surface_SizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -275,8 +272,6 @@ public partial class QuestView : UserControl
         Tagline.Visibility = e.NewSize.Width < 1280 ? Visibility.Collapsed : Visibility.Visible;
         if (!sidebarHidden) SidebarColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 210 : 236);
         if (!inspectorHidden) InspectorColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 280 : 325);
-        if (!codeOnly && !scenarioOnly) GraphRow.Height = new GridLength(readable ? (e.NewSize.Height < 800 ? 280 : 420) : (e.NewSize.Height < 800 ? 190 : 290));
-        if (Current != null) RenderGraph();
     }
     void Code_Changed(object sender, TextChangedEventArgs e)
     {
@@ -308,14 +303,14 @@ public partial class QuestView : UserControl
     void SyncSelectionToCaret()
     {
         if (Current == null || Current.Text != CodeEditor.Text || cardDirty || mode != "scripts") return;
-        var block = Current.BlockAt(CodeEditor.CaretIndex);
-        if (block == null || Selected?.Name == block.Name) return;
+        var block = CurrentCodeContext().At(CodeEditor.CaretIndex).Block;
+        if (Selected == block) return;
         Selected = block;
         navigating = true;
-        Navigation.SelectedItem = Navigation.Items.OfType<NavRow>().FirstOrDefault(r => r.Kind == "block" && ((ScriptBlock)r.Value).Name == block.Name);
+        Navigation.SelectedItem = Navigation.Items.OfType<NavRow>().FirstOrDefault(r => r.Kind == "block" && ((ScriptBlock)r.Value).Name == block?.Name);
         if (Navigation.SelectedItem != null) Navigation.ScrollIntoView(Navigation.SelectedItem);
         navigating = false;
-        FillCard(block); RenderGraph();
+        if (block != null) FillCard(block);
     }
     void Search_Changed(object sender, TextChangedEventArgs e) { if (Current != null) FillNavigation(); }
     void Scripts_Click(object sender, RoutedEventArgs e) { if (!ResolveCard()) return; mode = "scripts"; FillNavigation(); if (Selected != null) FillCard(Selected); }
@@ -365,13 +360,12 @@ public partial class QuestView : UserControl
         if (Current.Text != CodeEditor.Text) RefreshAnalysis(false);
         Selected = Current.Blocks.FirstOrDefault(b => b.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (Selected == null) return;
-        mode = "scripts"; FillNavigation(); FillCard(Selected); RenderGraph();
+        mode = "scripts"; FillNavigation(); FillCard(Selected);
         if (goToCode) GoToCode(Selected.Start);
     }
     void GoToCode(int offset)
     {
         if (QuestAtlasPanel.Visibility == Visibility.Visible) Code_Click(this, new RoutedEventArgs());
-        else if (scenarioOnly) Scenario_Click(this, new RoutedEventArgs());
         GoTo(offset);
     }
     void GoTo(int offset)
@@ -389,12 +383,10 @@ public partial class QuestView : UserControl
     }
     void FillCard(ScriptBlock block)
     {
+        explainedAnalysis = null;
         internalUpdate = true;
         CardPanel.Visibility = Visibility.Visible; HelpPanel.Visibility = Visibility.Collapsed;
         ExplanationContent.Visibility = Visibility.Visible;
-        InspectorTitle.Text = block.Display;
-        InspectorTitle.ToolTip = MakeTip(Help.Script(Current, block));
-        InspectorHint.Text = block.World ? "Стартовые команды карты. Редактируйте их в коде; ниже можно добавить вызов этапа." : block.CardEditable ? "Одна ветка условий. Карточка изменяет только выбранные фрагменты кода." : "Сложная структура. Правьте код: автоматическая перестройка такого Script отключена.";
         ConditionBox.Text = block.Conditions == null ? "" : Current.Slice(block.Conditions);
         ActionBox.Text = block.Actions == null ? (block.World ? Current.Slice(block.Body) : "") : Current.Slice(block.Actions);
         ElseBox.Text = block.ElseActions == null ? "" : Current.Slice(block.ElseActions);
@@ -453,6 +445,7 @@ public partial class QuestView : UserControl
     }
     void ShowHelp(HoverHelp help)
     {
+        explainedAnalysis = null;
         ExplanationContent.Visibility = Visibility.Collapsed;
         CardPanel.Visibility = Visibility.Collapsed; HelpPanel.Visibility = Visibility.Visible;
         InspectorTitle.Text = help.Title; InspectorTitle.ToolTip = MakeTip(help); InspectorHint.Text = help.Kind;
@@ -461,6 +454,7 @@ public partial class QuestView : UserControl
     }
     void ShowFlag(List<FlagUse> uses)
     {
+        explainedAnalysis = null;
         ExplanationContent.Visibility = Visibility.Collapsed;
         var first = uses[0]; CardPanel.Visibility = Visibility.Collapsed; HelpPanel.Visibility = Visibility.Visible;
         InspectorTitle.Text = first.Key; InspectorHint.Text = "GS-переменная · буквальный ключ";
@@ -614,50 +608,10 @@ public partial class QuestView : UserControl
         }
         return (maps, errors);
     }
-    void Mixed_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Collapsed; readable = false; ScenarioPanel.Visibility = Visibility.Collapsed; GraphPanel.Visibility = Visibility.Visible; codeOnly = false; ShowCodeArea(); GraphRow.Height = new GridLength(Surface.ActualHeight < 800 ? 190 : 290); RenderGraph(); }
-    void Code_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Collapsed; codeOnly = true; ScenarioPanel.Visibility = GraphPanel.Visibility = Visibility.Collapsed; ShowCodeArea(); GraphRow.Height = new GridLength(0); }
-
-    public void RenderGraph()
+    void Code_Click(object sender, RoutedEventArgs e)
     {
-        RenderScenario();
-        if (codeOnly || GraphPanel.Visibility != Visibility.Visible) return;
-        GraphCanvas.Children.Clear();
-        var center = Selected ?? Current.Blocks.FirstOrDefault();
-        if (center == null) return;
-        var byName = Current.Blocks.GroupBy(b => b.Name, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
-        var incoming = Current.Blocks.Where(b => b != center && b.Calls.Any(c => c.Name.Equals(center.Name, StringComparison.OrdinalIgnoreCase))).Take(5).ToArray();
-        var outgoing = center.Calls.Where(c => byName.ContainsKey(c.Name) && !c.Name.Equals(center.Name, StringComparison.OrdinalIgnoreCase)).Select(c => byName[c.Name]).Distinct().Take(5).ToArray();
-        int height = Math.Max((int)Math.Max(140, GraphRow.Height.Value - 40), Math.Max(incoming.Length, outgoing.Length) * 102 + 20);
-        GraphCanvas.Width = 712; GraphCanvas.Height = height;
-        // Fine drafting grid, deliberately quieter than the actual links.
-        for (int x = 12; x < 712; x += 24) for (int y = 12; y < height; y += 24)
-        { var dot = new Ellipse { Width = 1.5, Height = 1.5, Fill = MalachiteTheme.Border, IsHitTestVisible = false }; Canvas.SetLeft(dot, x); Canvas.SetTop(dot, y); GraphCanvas.Children.Add(dot); }
-        double centerY = Math.Max(25, height / 2.0 - 40);
-        foreach (var pair in incoming.Select((b, i) => (b, i))) DrawEdge(216, 28 + pair.i * 102 + 34, 257, centerY + 34);
-        foreach (var pair in outgoing.Select((b, i) => (b, i))) DrawEdge(455, centerY + 34, 498, 28 + pair.i * 102 + 34);
-        foreach (var pair in incoming.Select((b, i) => (b, i))) DrawNode(pair.b, 18, 28 + pair.i * 102, false);
-        DrawNode(center, 257, centerY, true);
-        foreach (var pair in outgoing.Select((b, i) => (b, i))) DrawNode(pair.b, 498, 28 + pair.i * 102, false);
-        if (incoming.Length + outgoing.Length == 0)
-        { var note = new TextBlock { Text = "Прямых связей с другими Script не найдено", Foreground = MalachiteTheme.Muted, FontSize = 11 }; Canvas.SetLeft(note, 210); Canvas.SetTop(note, centerY + 90); GraphCanvas.Children.Add(note); }
-    }
-    void DrawEdge(double x1, double y1, double x2, double y2)
-    {
-        var geometry = new PathGeometry(); var figure = new PathFigure { StartPoint = new(x1, y1), IsClosed = false };
-        figure.Segments.Add(new BezierSegment(new(x1 + 25, y1), new(x2 - 25, y2), new(x2, y2), true)); geometry.Figures.Add(figure);
-        var stroke = MalachiteTheme.Accent;
-        GraphCanvas.Children.Add(new System.Windows.Shapes.Path { Data = geometry, Stroke = stroke, StrokeThickness = 1.6, IsHitTestVisible = false });
-        GraphCanvas.Children.Add(new System.Windows.Shapes.Path { Data = Geometry.Parse(FormattableString.Invariant($"M {x2 - 6},{y2 - 4} L {x2},{y2} {x2 - 6},{y2 + 4}")), Stroke = stroke, StrokeThickness = 1.6 });
-    }
-    void DrawNode(ScriptBlock block, double x, double y, bool selected)
-    {
-        var stack = new StackPanel();
-        stack.Children.Add(new TextBlock { Text = block.World ? "ВХОД · WORLDSCRIPT" : "SCRIPT · " + block.Line, FontSize = 9, Foreground = MalachiteTheme.Muted });
-        stack.Children.Add(new TextBlock { Text = block.Name, FontSize = 13, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 5, 0, 4), TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap });
-        stack.Children.Add(new TextBlock { Text = block.World ? "Запуск карты" : $"{block.Calls.Count} вызовов · {(block.CardEditable ? "карточка + код" : "код")}", FontSize = 10, Foreground = MalachiteTheme.Muted });
-        var button = new Button { Content = stack, Width = 198, Padding = new Thickness(12, 10, 12, 10), Margin = new Thickness(0), Background = new SolidColorBrush(selected ? Color.FromRgb(35, 58, 44) : Color.FromRgb(27, 30, 28)), BorderBrush = new SolidColorBrush(selected ? Color.FromRgb(57, 184, 110) : Color.FromRgb(48, 54, 50)), ToolTip = "Описание скрипта" };
-        ToolTipService.SetInitialShowDelay(button, 450); ToolTipService.SetShowDuration(button, 60000);
-        button.ToolTipOpening += (_, _) => button.ToolTip = MakeTip(Help.Symbol(Current, block.Name));
-        button.Click += (_, _) => SelectBlock(block.Name, true); Canvas.SetLeft(button, x); Canvas.SetTop(button, y); GraphCanvas.Children.Add(button);
+        QuestAtlasPanel.Visibility = Visibility.Collapsed;
+        CodeButton.BorderBrush = MalachiteTheme.Accent;
+        UpdateEditorBounds(); ExplainAt(CodeEditor.CaretIndex);
     }
 }

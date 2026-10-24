@@ -4,7 +4,7 @@ using DatabaseEditor.Modules.V1;
 
 namespace QuestStudio;
 
-// One read-only explanation source for scenario cards and the action inspector.
+// Shared read-only explanations for commands and stage summaries in the inspector.
 // Bindings describe the source WorldScript, never the current state of a game.
 public sealed class ScenarioExplanation
 {

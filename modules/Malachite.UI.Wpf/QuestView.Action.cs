@@ -108,7 +108,7 @@ public partial class QuestView
         };
         apply.Click += (_, _) =>
         {
-            try { if (plan == null) return; ApplyEditorPlan(plan); var name = ((ActionTarget)target.SelectedItem).Name; Close(); SelectBlock(name, false); Scenario_Click(this, new()); SetStatus(plan.Description + " · Ctrl+S — сохранить."); }
+            try { if (plan == null) return; ApplyEditorPlan(plan); var name = ((ActionTarget)target.SelectedItem).Name; Close(); SelectBlock(name, false); Code_Click(this, new()); SetStatus(plan.Description + " · Ctrl+S — сохранить."); }
             catch (Exception ex) { Invalidate(); status.Text = ex.Message; }
         };
         target.SelectedItem = Selected == null ? targets.First() : targets.FirstOrDefault(t => t.Name == Selected.Name);
