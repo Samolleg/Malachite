@@ -42,10 +42,11 @@ public static class MapQuestInventory
             var reads = group.Where(p => p.Call.Name.Equals("GSGetVar", StringComparison.OrdinalIgnoreCase)).ToArray();
             if (writes.Length == 0 && completion.Length == 0 && reads.Length == 0) continue;
             bool local = writes.Length > 0 || completion.Length > 0;
-            var reasons = writes.Select(p => (p.Key, Value: QuestPredicate.Number(analysis.Slice(p.Call.Arguments[2])), p.Call))
-                .DistinctBy(p => (p.Key, p.Value)).Select(p => WriteReason(p.Key!, p.Value!.Value) + " стр. " + p.Call.Line)
-                .Concat(completion.Select(p => "завершается (QuestComplete) стр. " + p.Call.Line));
-            string reason = local ? string.Join("; ", reasons) : ReadReason(analysis, reads[0].Call);
+            // One short proof in the picker; every occurrence remains in Proof and the overview.
+            var primary = writes.FirstOrDefault(p => p.Key == group.Key);
+            if (primary.Call == null) primary = writes.FirstOrDefault();
+            string reason = primary.Call != null ? WriteReason(primary.Key!, QuestPredicate.Number(analysis.Slice(primary.Call.Arguments[2]))!.Value) + " стр. " + primary.Call.Line :
+                completion.Length > 0 ? "завершается (QuestComplete) стр. " + completion[0].Call.Line : ReadReason(analysis, reads[0].Call);
             items.Add(new(group.Key, Title(group.Key, snapshot), local ? 0 : 1, reason,
                 string.Join("\n", group.Select(p => Proof(p.Call, p.Key!)).Concat(completion.Select(p => Proof(p.Call, p.Name!))))));
         }
