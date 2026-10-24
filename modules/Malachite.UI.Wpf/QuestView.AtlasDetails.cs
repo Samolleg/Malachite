@@ -25,21 +25,25 @@ public partial class QuestView
     }
     void AddAtlasQuestText(string quest, WorkspaceSnapshot snapshot)
     {
-        var records = snapshot.Records.Where(r => r.Reference.TableKey == "quests.quests" && r.Name == quest).ToArray();
-        if (records.Length != 1) { AtlasNodes.Children.Add(AtlasNote("Название и подпункты не установлены: запись отсутствует или неоднозначна.", true)); return; }
-        var texts = records[0].Texts.Where(t => t.ResourceKey.Equals("quest " + quest, StringComparison.OrdinalIgnoreCase)).ToArray();
+        var record = QuestAtlas.QuestRecord(quest, snapshot);
+        if (record == null) { AtlasNodes.Children.Add(AtlasNote("Название БД не назначено: нет единственной записи с точным именем и подходящей зоной QDB. Показан буквальный GS-ключ.", true)); return; }
+        var texts = record.Texts.Where(t => t.ResourceKey.Equals("quest " + record.Name, StringComparison.Ordinal)).ToArray();
         if (texts.Length != 1) { AtlasNodes.Children.Add(AtlasNote("Название и подпункты: текст QUEST отсутствует или неоднозначен в снимке БД.", true)); return; }
         var resource = texts[0];
         if (resource.Modified) AtlasNodes.Children.Add(AtlasNote("Показан несохранённый текст QUEST из текущего снимка БД.", true));
         var sections = Regex.Matches(resource.Description, @"(?im)^[\t ]*#subobj[\t ]+(\S+)[\t ]*\r?$").Cast<Match>().ToArray();
-        foreach (var section in sections)
+        AtlasNodes.Children.Add(AtlasLazy("Описание и подпункты из БД", () =>
         {
-            var tail = resource.Description[(section.Index + section.Length)..].TrimStart('\r', '\n');
-            string title = tail.Split('\r', '\n')[0].Trim();
-            bool duplicate = sections.Count(s => s.Groups[1].Value == section.Groups[1].Value) != 1;
-            AtlasNodes.Children.Add(AtlasNote("Подпункт " + section.Groups[1].Value + ": " + (duplicate ? "неоднозначный #subobj" : title)));
-        }
-        AtlasNodes.Children.Add(AtlasLazy("Описание из текущего текста QUEST", () => AtlasNote(resource.Description)));
+            var panel = new StackPanel();
+            foreach (var section in sections)
+            {
+                var tail = resource.Description[(section.Index + section.Length)..].TrimStart('\r', '\n');
+                string title = tail.Split('\r', '\n')[0].Trim();
+                bool duplicate = sections.Count(s => s.Groups[1].Value == section.Groups[1].Value) != 1;
+                panel.Children.Add(AtlasNote("Подпункт " + section.Groups[1].Value + ": " + (duplicate ? "неоднозначный #subobj" : title)));
+            }
+            panel.Children.Add(AtlasNote(resource.Description)); return panel;
+        }));
     }
     void AddAtlasGroup(string title, IEnumerable<QuestPoint> points, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
     {
@@ -48,12 +52,18 @@ public partial class QuestView
         {
             var panel = new StackPanel();
             if (rows.Length == 0) panel.Children.Add(AtlasNote("В просмотренных источниках не найдено; это пробел, а не доказательство отсутствия.", true));
-            foreach (var point in rows) panel.Children.Add(AtlasPointEntry(point, maps, snapshot, route));
+            foreach (var part in rows.GroupBy(p => p.Record != null ? "Действия БД" : p.Key.StartsWith("b.", StringComparison.Ordinal) ? "Состояние брифинга" : QuestAtlas.Part(p.Key)))
+                panel.Children.Add(AtlasLazy(part.Key + " · " + part.Count(), () =>
+                {
+                    var entries = new StackPanel();
+                    foreach (var point in part) entries.Children.Add(AtlasPointEntry(point, maps, snapshot, route));
+                    return entries;
+                }));
             return panel;
         }));
     }
     FrameworkElement AtlasPointEntry(QuestPoint point, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route) =>
-        AtlasLazyAsync(Path.GetFileName(point.Map) + " · " + point.Script + (point.Line > 0 ? " · строка " + point.Line : ""),
+        AtlasLazyAsync(Path.GetFileName(point.Map) + " · " + point.Script + (point.Line > 0 ? " · строка " + point.Line : "") + " · " + point.Key,
             () => AtlasPointViewAsync(point, maps, snapshot, route));
     async Task<FrameworkElement> AtlasPointViewAsync(QuestPoint point, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
     {
@@ -96,8 +106,7 @@ public partial class QuestView
                     panel.Children.Add(AtlasNote("Входящий запуск этого Script не найден. Внешнее событие / достижимость неизвестны.", true));
             }
             // Other independent checks in the same Script can finish a neighbouring quest.
-            var nearby = map.Points.Where(p => p.Script.Equals(point.Script, StringComparison.OrdinalIgnoreCase) && p.Id != point.Id &&
-                (p.Write || !p.Write && p.Key == point.Key)).ToArray();
+            var nearby = map.Points.Where(p => p.Script.Equals(point.Script, StringComparison.OrdinalIgnoreCase) && p.Id != point.Id && p.Key == point.Key).ToArray();
             if (nearby.Length > 0) panel.Children.Add(AtlasLazy("Другие обращения этого Script · условия независимы", () =>
             {
                 var other = new StackPanel();
@@ -130,6 +139,35 @@ public partial class QuestView
             panel.Children.Add(AtlasLink(other, "Возможная зависимость · " + Path.GetFileName(other.Map) + " · " + other.Script + ":" + other.Line + "\n" + edge.Reason));
         }
         return new Border { Child = panel, BorderBrush = MalachiteTheme.Border, BorderThickness = new(0, 0, 0, 1), Padding = new(5, 4, 5, 10), Margin = new(5) };
+    }
+    void AddAtlasDependencies(string quest, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
+    {
+        var links = maps.SelectMany(m => m.Dependencies).Where(d => d.Check.Quest == quest || d.Action.Quest == quest).ToArray();
+        AtlasNodes.Children.Add(AtlasLazy("Зависимости по условиям и действиям · " + links.Length, () =>
+        {
+            var panel = new StackPanel();
+            if (links.Length == 0) panel.Children.Add(AtlasNote("Доказанные связи не найдены в просмотренных источниках.", true));
+            foreach (var group in links.GroupBy(d => (Incoming: d.Action.Quest == quest, Other: d.Action.Quest == quest ? d.Check.Quest : d.Action.Quest)))
+            {
+                panel.Children.Add(AtlasLazy((group.Key.Incoming ? "Зависит от: " : "Влияет на: ") + AtlasQuestTitle(group.Key.Other, snapshot) + " · " + group.Key.Other, () =>
+                {
+                    var proof = new StackPanel();
+                    foreach (var link in group)
+                    {
+                        proof.Children.Add(AtlasNote("Условие → " + link.Branch + ". Это связь в коде; достижимость и остальные условия не установлены.", true));
+                        proof.Children.Add(AtlasLink(link.Check, Path.GetFileName(link.Check.Map) + ":" + link.Check.Line + " · " + link.Check.Action));
+                        foreach (var call in link.Calls)
+                            proof.Children.Add(AtlasLink(link.Check with { Offset = call.Offset, Line = call.Line, Script = call.From }, "Строка " + call.Line + " · " + call.From + " → " + call.To));
+                        proof.Children.Add(AtlasLink(link.Action, Path.GetFileName(link.Action.Map) + ":" + link.Action.Line + " · " + link.Action.Action));
+                        proof.Children.Add(AtlasPointEntry(link.Action, maps, snapshot, route));
+                    }
+                    var open = new Button { Content = "Обзор " + group.Key.Other };
+                    open.Click += (_, _) => OpenWholeQuest(group.Key.Incoming ? group.First().Check : group.First().Action);
+                    proof.Children.Add(open); return proof;
+                }));
+            }
+            return panel;
+        }));
     }
     FrameworkElement AtlasChildren(QuestMap map, string script, WorkspaceSnapshot snapshot, HashSet<string> ancestors)
     {

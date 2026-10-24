@@ -16,7 +16,8 @@ public static class QuestStateReference
         var key = raw[1..^1];
         var parts = key.Split('.');
         if (parts.Length is not (3 or 4) || parts[0] != "q" || parts.Any(string.IsNullOrWhiteSpace)) return null;
-        var records = snapshot.Records.Where(r => r.Reference.TableKey == "quests.quests" && r.Name == parts[2]).ToArray();
+        var record = QuestAtlas.QuestRecord(QuestAtlas.QuestRoot(key)!, snapshot);
+        RecordDto[] records = record == null ? [] : [record];
         string target = parts.Length == 4 ? "Подпункт " + parts[3] : "Квест";
         string title = "Квест «" + parts[2] + "» · " + target + " · зона " + parts[1];
         string text = "";
@@ -52,7 +53,7 @@ public static class QuestStateReference
             }
             else text = "Текст QUEST " + parts[2] + " отсутствует или неоднозначен в текущем снимке.";
         }
-        else text = records.Length == 0 ? "Квест не найден в текущей БД; название и подпункт не определены." : "Несколько записей квеста с этим ключом. Выберите запись вручную.";
+        else text = "Для полного ключа нет единственной записи с точным именем и подходящей зоной QDB; название и подпункт не назначены.";
 
         string operation;
         var name = call.Name.ToLowerInvariant();

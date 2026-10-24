@@ -9,7 +9,7 @@ namespace QuestStudio;
 // Only parsed MOB data is cached. Quest titles and briefing effects always come from the current DB.
 public static class MapIndexCache
 {
-    const int Schema = 1;
+    const int Schema = 2;
     static string ParserVersion => typeof(ScriptAnalyzer).Module.ModuleVersionId + ":" + typeof(QuestAtlas).Module.ModuleVersionId;
     public sealed record Item(string Path, string Hash, QuestView.IndexedMap? Map, string? Error);
     public sealed record Snapshot(int Version, Item[] Items, string ParserVersion);
@@ -74,6 +74,6 @@ public static class MapIndexCache
     }
     static bool Valid(Item item) => item.Map == null ? !string.IsNullOrEmpty(item.Error) :
         item.Map.Path == item.Path && item.Map.Hash == item.Hash && item.Map.Flags != null &&
-        item.Map.Quests is { Points: not null, Calls: not null, Briefings: not null } q && q.Path == item.Path && q.Hash == item.Hash &&
+        item.Map.Quests is { Points: not null, Calls: not null, Briefings: not null, Dependencies: not null } q && q.Path == item.Path && q.Hash == item.Hash &&
         item.Map.Flags.All(f => f != null) && q.Points.All(p => p != null) && q.Calls.All(c => c != null) && q.Briefings.All(b => b != null);
 }
