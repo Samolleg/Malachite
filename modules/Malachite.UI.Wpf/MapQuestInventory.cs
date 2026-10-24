@@ -55,7 +55,8 @@ public static class MapQuestInventory
             var rootEvents = writes.Where(p => p.Key == group.Key && QuestPredicate.Number(analysis.Slice(p.Call.Arguments[2])) is 1 or 2).ToArray();
             var evidence = (rootEvents.Length > 0 ? rootEvents : primary.Call != null ? [primary] : writes)
                 .Select(p => new MapQuestEvidence(WriteReason(p.Key!, QuestPredicate.Number(analysis.Slice(p.Call.Arguments[2]))!.Value), p.Call.Line))
-                .Concat(completion.Select(p => new MapQuestEvidence("завершается", p.Call.Line))).ToArray();
+                .Concat(completion.Select(p => new MapQuestEvidence("завершается", p.Call.Line)))
+                .GroupBy(e => e.Operation).Select(g => g.First()).ToArray();
             string reason = local ? EvidenceReason(evidence) : ReadReason(analysis, reads[0].Call);
             items.Add(new(group.Key, Title(group.Key, snapshot), local ? 0 : 1, reason,
                 string.Join("\n", group.Select(p => Proof(p.Call, p.Key!)).Concat(completion.Select(p => Proof(p.Call, p.Name!))))) { Evidence = evidence });
@@ -65,7 +66,7 @@ public static class MapQuestInventory
         foreach (var group in completed.GroupBy(p => p.Name!, StringComparer.Ordinal))
             if (!items.Any(q => q.Category == 0 && QuestAtlas.QuestRecord(q.Key, snapshot)?.Name == group.Key))
             {
-                var evidence = group.Select(p => new MapQuestEvidence("завершается", p.Call.Line)).ToArray();
+                MapQuestEvidence[] evidence = [new("завершается", group.First().Call.Line)];
                 items.Add(new(group.Key, Title(group.Key, snapshot), 0, EvidenceReason(evidence),
                     string.Join("\n", group.Select(p => Proof(p.Call, p.Name!)))) { Evidence = evidence });
             }
@@ -92,12 +93,13 @@ public static class MapQuestInventory
             .GroupBy(q => (Record: QuestAtlas.QuestRecord(q.Key, snapshot)!.Reference, q.Category))
             .Select(g =>
             {
-                var first = g.First();
+                var rows = g.OrderBy(q => q.Evidence.Select(e => e.Line).DefaultIfEmpty(int.MaxValue).Min()).ThenBy(q => q.Key, StringComparer.Ordinal).ToArray();
+                var first = rows[0];
                 var record = QuestAtlas.QuestRecord(first.Key, snapshot)!;
                 var evidence = g.SelectMany(q => q.Evidence).Distinct().ToArray();
                 return first with
                 {
-                    Keys = g.Select(q => q.Key).ToArray(),
+                    Keys = rows.Select(q => q.Key).ToArray(),
                     DisplayKey = first.Title == record.Name + " (нет названия в texts.res)" ? null : g.Count() > 1 ? record.Name : first.Key,
                     Reason = evidence.Length > 0 ? EvidenceReason(evidence) : string.Join(" · ", g.Select(q => q.Reason).Distinct()),
                     Evidence = evidence,
