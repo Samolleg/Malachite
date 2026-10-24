@@ -13,7 +13,12 @@ public sealed record QuestPoint(string Id, string Quest, string Key, string Cont
 public sealed record QuestConnection(string From, string To, string Reason, bool Certain);
 public sealed record ScriptConnection(string From, string To, int Offset, int Line);
 public sealed record BriefingUse(string Name, string Map, string Script, int Offset, int Line, string Key, string Context, string Action);
-public sealed record QuestMap(string Path, string? Hash, QuestPoint[] Points, ScriptConnection[] Calls, BriefingUse[] Briefings);
+public sealed record QuestMap(string Path, string? Hash, QuestPoint[] Points, ScriptConnection[] Calls, BriefingUse[] Briefings)
+{
+    public string Text { get; init; } = "";
+    public MobObject[] Objects { get; init; } = [];
+    public string[] Gaps { get; init; } = [];
+}
 public sealed record QuestRoute(QuestPoint[] Points, QuestConnection[] Connections);
 
 public static class QuestAtlas
@@ -42,7 +47,7 @@ public static class QuestAtlas
             var context = c.Arguments.Count > 0 ? a.Slice(c.Arguments[0]).Trim() : "";
             bool write = !c.Name.Equals("GSGetVar", StringComparison.OrdinalIgnoreCase);
             string action = c.Name + "(" + string.Join(", ", c.Arguments.Select(a.Slice)) + ")";
-            if (quest != null) points.Add(new(path + "@" + c.Start, quest, gs ? key! : "", context, path, hash, c.Owner,
+            if (quest != null || gs && key != null) points.Add(new(path + "@" + c.Start, quest ?? "", gs ? key! : "", context, path, hash, c.Owner,
                 c.Start, c.Line, action, Conditions(c), write)
             {
                 WrittenValue = gs && write ? (c.Name.Equals("GSDelVar", StringComparison.OrdinalIgnoreCase) ? 0 : c.Arguments.Count == 3 ? QuestPredicate.Number(a.Slice(c.Arguments[2])) : null) : null,
@@ -60,7 +65,10 @@ public static class QuestAtlas
         }
         var scriptNames = a.Blocks.Select(b => b.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var calls = a.Calls.Where(c => scriptNames.Contains(c.Name)).Select(c => new ScriptConnection(c.Owner, c.Name, c.Start, c.Line)).Distinct().ToArray();
-        return new(path, hash, points.ToArray(), calls, briefings.ToArray());
+        var gaps = a.Calls.Where(c => (QuestStateReference.Supports(c.Name) || c.Name.Equals("QuestComplete", StringComparison.OrdinalIgnoreCase)) && Literal(a, c, 1) == null)
+            .Select(c => c.Owner + ":" + c.Line + " · вычисляемый ключ " + c.Name + "; связь не определена").ToList();
+        gaps.AddRange(a.Issues.Select(i => "Строка " + i.Line + " · " + i.Message));
+        return new(path, hash, points.ToArray(), calls, briefings.ToArray()) { Text = a.Text, Gaps = gaps.ToArray() };
     }
     static List<(int Start, int End, string Text)> BuildGuards(Analysis a)
     {
@@ -88,14 +96,14 @@ public static class QuestAtlas
         {
             string id = "brief:" + record.Reference.RecordId + ":" + field.FieldId + ":" + key;
             string action = field.FieldId == 6 ? "Выдача: повысить состояние минимум до 1" : "Завершение: установить состояние 2";
-            var title = record.Texts.FirstOrDefault()?.Title ?? record.Label;
+            var title = record.Texts.Length == 1 ? record.Texts[0].Title : record.Label + " [название текста отсутствует или неоднозначно]";
             points.Add(new(id, quest, key, "контекст брифинга", "БД · брифинги", null, record.Name, 0, 0,
                 action + "\n" + title + "\n" + string.Join("\n", record.Texts.Select(t => t.Description)), "Действие после прохождения брифинга (поле QDB " + field.FieldId + ").", true, record.Reference)
                 { WrittenValue = field.FieldId == 6 ? 1 : 2, Maximum = field.FieldId == 6 });
             foreach (var use in sources.SelectMany(m => m.Briefings).Where(b => b.Name == record.Name))
             {
                 var source = sources.First(m => m.Path == use.Map);
-                string useId = use.Map + "@brief" + use.Offset;
+                string useId = use.Map + "@" + use.Offset;
                 if (!points.Any(p => p.Id == useId)) points.Add(new(useId, quest, use.Key, use.Context, use.Map, source.Hash, use.Script, use.Offset, use.Line, use.Action, "Использование состояния брифинга. Не доказывает, что игрок его прошёл.", !use.Action.StartsWith("GSGetVar", StringComparison.OrdinalIgnoreCase)));
                 edges.Add(new(useId, id, "Состояние брифинга → запись БД; прохождение зависит от игрока", false));
             }

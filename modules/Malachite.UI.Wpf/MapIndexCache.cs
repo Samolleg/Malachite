@@ -64,10 +64,13 @@ public static class MapIndexCache
 
     internal static QuestView.IndexedMap Describe(Workspace document, Analysis analysis, string path, string hash)
     {
-        int? objects = null;
-        try { if (document.Mob != null) objects = MobObjects.Read(document.Mob).Count; }
+        MobObject[]? objects = null;
+        try { if (document.Mob != null) objects = MobObjects.Read(document.Mob).ToArray(); }
         catch (Exception ex) when (ex is InvalidDataException or InvalidOperationException or OverflowException) { }
-        return new(path, hash, analysis.Flags) { Quests = QuestAtlas.Read(analysis, path, hash), ScriptCount = analysis.Blocks.Count(b => !b.World), ObjectCount = objects };
+        var questMap = QuestAtlas.Read(analysis, path, hash);
+        return new(path, hash, analysis.Flags) { Quests = questMap with { Objects = objects ?? [],
+            Gaps = objects == null ? questMap.Gaps.Append("Объекты MOB не прочитаны; имена объектов неизвестны.").ToArray() : questMap.Gaps },
+            ScriptCount = analysis.Blocks.Count(b => !b.World), ObjectCount = objects?.Length };
     }
     static bool Valid(Item item) => item.Map == null ? !string.IsNullOrEmpty(item.Error) :
         item.Map.Path == item.Path && item.Map.Hash == item.Hash && item.Map.Flags != null &&

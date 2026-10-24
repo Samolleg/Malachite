@@ -90,6 +90,7 @@ public partial class QuestView
         InspectorTitle.Text = title; InspectorTitle.ToolTip = null;
         InspectorHint.Text = "Строка " + position.Line + (position.Block == null ? " · вне Script" : " · " + position.Block.Display);
         panel.Children.Add(Note(description));
+        AddAtlasContext(panel, position);
         if (position.Block is { } block)
         {
             string summary = position.Rule == null ? index.StageSummary(block, CurrentExplanation()) : index.RuleSummary(position.Rule, CurrentExplanation());
