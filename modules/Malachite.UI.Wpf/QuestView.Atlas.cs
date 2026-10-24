@@ -20,12 +20,7 @@ public partial class QuestView
     readonly List<string> atlasIndexErrors = [];
     static string AtlasTextHash(string text) => "text:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text)));
     static string AtlasQuestTitle(string quest, WorkspaceSnapshot snapshot)
-    {
-        var record = QuestAtlas.QuestRecord(quest, snapshot);
-        if (record == null) return "Состояние без подтверждённого квеста БД";
-        var texts = record.Texts.Where(t => t.ResourceKey.Equals("quest " + record.Name, StringComparison.Ordinal)).ToArray();
-        return texts.Length == 1 ? texts[0].Title : quest + " · текст QUEST отсутствует или неоднозначен";
-    }
+        => MapQuestInventory.Title(quest, snapshot);
     public void RefreshQuestAtlas()
     {
         // Index/DB changes must also refresh a stationary inspector in the code view.
@@ -37,47 +32,24 @@ public partial class QuestView
         try
         {
             var snapshot = Host.Workspace.Snapshot();
-            // Inventory uses the already available current analysis, never an overview or explanations.
-            var direct = Current.Calls.Where(c => QuestStateReference.Supports(c.Name))
-                .Select(c => (Call: c, Key: QuestAtlas.Literal(Current, c, 1)))
-                .Where(p => p.Key != null && QuestAtlas.QuestRoot(p.Key) != null)
-                .GroupBy(p => QuestAtlas.QuestRoot(p.Key!)!, StringComparer.Ordinal).ToArray();
-            var briefings = Current.Calls.Where(c => QuestStateReference.Supports(c.Name))
-                .Select(c => QuestAtlas.Literal(Current, c, 1)?.Split('.'))
-                .Where(p => p is { Length: 3 } && p[0] == "b").Select(p => p![2]).ToHashSet(StringComparer.Ordinal);
-            var items = new List<AtlasQuest>();
-            foreach (var group in direct)
-            {
-                var writes = group.Where(p => !p.Call.Name.Equals("GSGetVar", StringComparison.OrdinalIgnoreCase)).ToArray();
-                var first = writes.Length > 0 ? writes[0] : group.First();
-                string reason = writes.Length > 0 ? AtlasWriteReason(Current, first.Call, first.Key!) + ", стр. " + first.Call.Line : "проверяется в " + group.Count() + " местах";
-                string proof = string.Join("\n", group.Select(p => Path.GetFileName(AtlasPath) + ":" + p.Call.Line + " · " + p.Key + " · " + Current.Text[p.Call.Start..p.Call.End]));
-                items.Add(new(group.Key, AtlasQuestTitle(group.Key, snapshot), writes.Length > 0 ? 0 : 1, reason, proof));
-            }
-            if (AtlasIndirect.IsChecked == true)
-                foreach (var briefing in snapshot.Records.Where(r => r.Reference.TableKey == "quests.briefings" && briefings.Contains(r.Name)))
-                foreach (var field in briefing.Fields.Where(f => f.FieldId is 6 or 7 && f.Value.Kind == "StringList"))
-                foreach (var key in field.Value.ExactValue.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-                    if (QuestAtlas.QuestRoot(key) is { } root && !items.Any(q => q.Key == root && q.Category != 2))
-                    {
-                        var calls = Current.Calls.Where(c => QuestStateReference.Supports(c.Name) && QuestAtlas.Literal(Current, c, 1)?.Split('.') is { Length: 3 } p && p[0] == "b" && p[2] == briefing.Name);
-                        string proof = "БД · брифинг " + briefing.Name + " · поле " + field.FieldId + " · " + key + "\n" +
-                            string.Join("\n", calls.Select(c => Path.GetFileName(AtlasPath) + ":" + c.Line + " · " + Current.Text[c.Start..c.End]));
-                        items.Add(new(root, AtlasQuestTitle(root, snapshot), 2, "брифинг " + briefing.Name + " · " + (field.FieldId == 6 ? "выдача" : "завершение"), proof));
-                    }
-            var inventory = new ListCollectionView(items.GroupBy(q => (q.Key, q.Category)).Select(g => g.First() with
-                { Reason = string.Join("; ", g.Select(q => q.Reason).Distinct()), Proof = string.Join("\n", g.Select(q => q.Proof).Distinct()) })
-                .OrderBy(q => q.Category).ThenBy(q => q.Title).ThenBy(q => q.Key).ToArray());
-            inventory.GroupDescriptions.Add(new PropertyGroupDescription(nameof(AtlasQuest.Group)));
+            var items = MapQuestInventory.Read(Current, snapshot, AtlasPath, AtlasIndirect.IsChecked == true);
+            var inventory = new ListCollectionView(items.Where(q => q.Category != 1).ToArray());
+            var checks = new ListCollectionView(items.Where(q => q.Category == 1).ToArray());
+            checks.Filter = AtlasMatchesSearch;
+            AtlasOtherChecks.ItemsSource = checks;
+            AtlasOtherChecks.SelectedItem = AtlasOtherChecks.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Key == atlasQuest);
+            AtlasOtherExpander.Header = "Проверки квестов других карт · " + items.Count(q => q.Category == 1);
+            AtlasOtherExpander.Visibility = items.Any(q => q.Category == 1) ? Visibility.Visible : Visibility.Collapsed;
+            inventory.GroupDescriptions.Add(new PropertyGroupDescription(nameof(MapQuestItem.Group)));
             inventory.Filter = AtlasMatchesSearch;
             AtlasQuests.ItemsSource = inventory;
-            AtlasQuests.SelectedItem = AtlasQuests.Items.OfType<AtlasQuest>().FirstOrDefault(q => q.Key == atlasQuest);
+            AtlasQuests.SelectedItem = AtlasQuests.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Key == atlasQuest);
             AtlasNodes.Children.Clear();
             AtlasStatus.Text = (folderIndexing ? "Индексируется… " + folderProgress : mapsStatus) + $" · индекс диска: {indexedMaps.Count} карт · ошибок индекса {atlasIndexErrors.Count}" +
                 (snapshot.Modified ? " · снимок БД: есть несохранённые изменения" : " · текущий снимок БД");
             AtlasStatus.ToolTip = "Индекс — снимок диска на момент чтения. Открытые вкладки заменяют его текущим текстом. Обновить диск: Папка MOB…";
             AtlasNodes.Children.Add(AtlasLazyAsync("Просмотренные карты и пробелы источников", async () => AtlasCoverage((await AtlasSourcesAsync()).Maps)));
-            if (atlasQuest == null) { AtlasNodes.Children.Add(AtlasNote(items.Count == 0 ? "На этой карте квесты не найдены. Включите квесты через брифинги или откройте обзор из GS-строки Инспектора." : "Выберите квест слева. У каждой строки указана причина; точные обращения — в подсказке и обзоре.")); return; }
+            if (atlasQuest == null) { AtlasNodes.Children.Add(AtlasNote(!items.Any(q => q.Category != 1) ? "На этой карте квесты не найдены. Включите квесты через брифинги или откройте обзор из GS-строки Инспектора." : "Выберите квест слева. У каждой строки указана причина; точные обращения — в подсказке и обзоре.")); return; }
             _ = LoadAtlasOverviewAsync(atlasQuest, snapshot, revision);
         }
         finally { atlasUpdating = false; }
@@ -135,30 +107,24 @@ public partial class QuestView
         }
         catch (Exception ex) { if (Active()) loading.Text = "Не удалось построить обзор: " + ex.Message; }
     }
-    static string AtlasWriteReason(Analysis analysis, Call call, string key)
-    {
-        string operation = call.Name.Equals("GSDelVar", StringComparison.OrdinalIgnoreCase) ? "удаляется" :
-            call.Arguments.Count > 2 ? QuestPredicate.Number(analysis.Slice(call.Arguments[2])) switch
-            { 0 => "сбрасывается", 1 => "выдаётся", 2 => "завершается", 3 => "проваливается", _ => "изменяется" } : "изменяется";
-        return (key.Split('.').Length == 4 ? QuestAtlas.Part(key) + " · " : "") + operation;
-    }
-    sealed record AtlasQuest(string Key, string Title, int Category, string Reason, string Proof)
-    {
-        public string Group => Category switch { 0 => "Выдаются или завершаются на этой карте", 1 => "Проверяются на этой карте", _ => "Через брифинги" };
-        public override string ToString() => Title + " · " + Key + " · " + Reason;
-    }
-    bool AtlasMatchesSearch(object item) => item is AtlasQuest q &&
+    bool AtlasMatchesSearch(object item) => item is MapQuestItem q &&
         (q.Title.Contains(AtlasSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase) || q.Key.Contains(AtlasSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase));
     void AtlasSearch_Changed(object sender, TextChangedEventArgs e)
     {
         if (AtlasQuests?.ItemsSource is not ListCollectionView inventory) return;
         atlasUpdating = true;
-        try { inventory.Refresh(); AtlasQuests.SelectedItem = AtlasQuests.Items.OfType<AtlasQuest>().FirstOrDefault(q => q.Key == atlasQuest); }
+        try
+        {
+            inventory.Refresh();
+            if (AtlasOtherChecks.ItemsSource is ListCollectionView checks) checks.Refresh();
+            AtlasQuests.SelectedItem = AtlasQuests.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Key == atlasQuest);
+            AtlasOtherChecks.SelectedItem = AtlasOtherChecks.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Key == atlasQuest);
+        }
         finally { atlasUpdating = false; }
     }
-    void Atlas_Click(object sender, RoutedEventArgs e) { atlasQuest = null; QuestAtlasPanel.Visibility = Visibility.Visible; CodeButton.BorderBrush = (Brush)FindResource("Line"); RefreshQuestAtlas(); }
+    void Atlas_Click(object sender, RoutedEventArgs e) { atlasQuest = null; AtlasOtherExpander.IsExpanded = false; QuestAtlasPanel.Visibility = Visibility.Visible; CodeButton.BorderBrush = (Brush)FindResource("Line"); RefreshQuestAtlas(); }
     void AtlasClose_Click(object sender, RoutedEventArgs e) => Code_Click(sender, e);
-    void AtlasSelection_Changed(object sender, SelectionChangedEventArgs e) { if (!atlasUpdating && AtlasQuests.SelectedItem is AtlasQuest quest) { atlasQuest = quest.Key; RefreshQuestAtlas(); } }
+    void AtlasSelection_Changed(object sender, SelectionChangedEventArgs e) { if (!atlasUpdating && sender is ListBox { SelectedItem: MapQuestItem quest }) { atlasQuest = quest.Key; RefreshQuestAtlas(); } }
     void AtlasScope_Changed(object sender, RoutedEventArgs e) => RefreshQuestAtlas();
     public void NavigateQuestPoint(QuestPoint point)
     {

@@ -64,6 +64,9 @@
        <Grid.ColumnDefinitions><ColumnDefinition Width="310" MinWidth="230"/><ColumnDefinition Width="6"/><ColumnDefinition Width="*" MinWidth="180"/></Grid.ColumnDefinitions>
        <DockPanel>
         <StackPanel DockPanel.Dock="Top" Margin="0,0,6,8"><TextBlock Text="Найти по названию или ключу" Foreground="#AAB2AA" FontSize="12" Margin="5,0,0,4"/><TextBox x:Name="AtlasSearch" TextChanged="AtlasSearch_Changed" ToolTip="Название квеста или полный GS-ключ"/></StackPanel>
+        <Expander x:Name="AtlasOtherExpander" DockPanel.Dock="Bottom" IsExpanded="False" Foreground="#AAB2AA" Margin="0,8,0,0">
+         <ListBox x:Name="AtlasOtherChecks" MaxHeight="220" ScrollViewer.CanContentScroll="False" SelectionChanged="AtlasSelection_Changed" ItemTemplate="{Binding ItemTemplate, ElementName=AtlasQuests}"/>
+        </Expander>
         <ListBox x:Name="AtlasQuests" ScrollViewer.CanContentScroll="False" SelectionChanged="AtlasSelection_Changed">
          <ListBox.GroupStyle><GroupStyle HidesIfEmpty="True"><GroupStyle.HeaderTemplate><DataTemplate><TextBlock Text="{Binding Name}" Foreground="#39B86E" TextWrapping="Wrap" Margin="6,12,6,6" FontWeight="SemiBold"/></DataTemplate></GroupStyle.HeaderTemplate></GroupStyle></ListBox.GroupStyle>
          <ListBox.ItemTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding Title}" FontWeight="SemiBold"/><TextBlock Text="{Binding Key}" Foreground="#39B86E" FontSize="12" Margin="0,3,0,0"/><TextBlock Text="{Binding Reason}" Foreground="#AAB2AA" FontSize="12" Margin="0,3,0,0"/></StackPanel></DataTemplate></ListBox.ItemTemplate>

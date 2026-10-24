@@ -225,7 +225,7 @@ public partial class QuestView : UserControl
     void ItemTip_Opening(object sender, ToolTipEventArgs e)
     {
         if (sender is not ListBoxItem item) return;
-        if (item.Content is AtlasQuest quest) { item.ToolTip = AtlasNote(quest.Proof); return; }
+        if (item.Content is MapQuestItem quest) { item.ToolTip = AtlasNote(quest.Proof); return; }
         if (item.Content is HomeMap map) { item.ToolTip = map.Path; return; }
         HoverHelp? help = item.Content switch
         {
