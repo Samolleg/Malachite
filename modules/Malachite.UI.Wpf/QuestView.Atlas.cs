@@ -38,7 +38,7 @@ public partial class QuestView
             checks.Filter = AtlasMatchesSearch;
             AtlasOtherChecks.ItemsSource = checks;
             AtlasOtherChecks.SelectedItem = AtlasOtherChecks.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Keys.Contains(atlasQuest, StringComparer.Ordinal));
-            AtlasOtherExpander.Header = "Проверки квестов других карт · " + items.Count(q => q.Category == 1);
+            AtlasOtherExpander.Header = "Только проверяются здесь · " + items.Count(q => q.Category == 1);
             AtlasOtherExpander.Visibility = items.Any(q => q.Category == 1) ? Visibility.Visible : Visibility.Collapsed;
             inventory.GroupDescriptions.Add(new PropertyGroupDescription(nameof(MapQuestItem.Group)));
             inventory.Filter = AtlasMatchesSearch;

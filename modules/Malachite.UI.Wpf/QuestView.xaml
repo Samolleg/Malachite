@@ -64,7 +64,7 @@
        <Grid.ColumnDefinitions><ColumnDefinition Width="310" MinWidth="230"/><ColumnDefinition Width="6"/><ColumnDefinition Width="*" MinWidth="180"/></Grid.ColumnDefinitions>
        <DockPanel>
         <StackPanel DockPanel.Dock="Top" Margin="0,0,6,8"><TextBlock Text="Найти по названию или ключу" Foreground="#AAB2AA" FontSize="12" Margin="5,0,0,4"/><TextBox x:Name="AtlasSearch" TextChanged="AtlasSearch_Changed" ToolTip="Название квеста или полный GS-ключ"/></StackPanel>
-        <Expander x:Name="AtlasOtherExpander" DockPanel.Dock="Bottom" IsExpanded="False" Foreground="#AAB2AA" Margin="0,8,0,0">
+        <Expander x:Name="AtlasOtherExpander" DockPanel.Dock="Bottom" IsExpanded="False" Foreground="#AAB2AA" Margin="0,8,0,0" ToolTip="Только проверяются здесь: квесты с проверками состояния, без подтверждённой выдачи, продвижения или завершения в скриптах этой карты.">
          <ListBox x:Name="AtlasOtherChecks" MaxHeight="220" ScrollViewer.CanContentScroll="False" SelectionChanged="AtlasSelection_Changed" ItemTemplate="{Binding ItemTemplate, ElementName=AtlasQuests}"/>
         </Expander>
         <ListBox x:Name="AtlasQuests" ScrollViewer.CanContentScroll="False" SelectionChanged="AtlasSelection_Changed">
