@@ -25,14 +25,31 @@ public partial class QuestView
             return;
         }
         offset = Math.Clamp(offset, 0, Math.Max(0, Current.Text.Length - 1));
-        var call = Current.Calls.Where(c => c.Start <= offset && offset < c.End).MinBy(c => c.End - c.Start);
+        var call = Current.Calls.Where(c => c.Start <= offset && offset < c.End).MaxBy(c => c.End - c.Start);
         int tokenStart = Current.Tokens.FirstOrDefault(t => t.Start <= offset && offset < t.End)?.Start ?? call?.Start ?? offset;
         if (explainedAnalysis == Current && explainedToken == tokenStart && !explanationWaiting) return;
         explainedAnalysis = Current; explainedToken = tokenStart; explanationWaiting = false;
         var help = HelpAt(CodeEditor, offset) ?? (call == null ? null : EnrichDatabaseHelp(Current, call.Start, Help.Command(call.Name, Current, call)));
         if (help == null && Selected != null) help = Help.Script(Current, Selected);
         explanationOffset = call?.Start ?? offset;
-        ExplanationContent.Content = help == null ? new TextBlock { Text = "Выберите действие или поставьте курсор в коде.", Foreground = MalachiteTheme.Muted } : HelpView(help);
+        if (call == null) ExplanationContent.Content = help == null
+            ? new TextBlock { Text = "Выберите действие или поставьте курсор в коде.", Foreground = MalachiteTheme.Muted } : HelpView(help);
+        else
+        {
+            var panel = new StackPanel();
+            bool condition = Current.Tokens.Select((token, i) => (token, i)).Any(t =>
+                t.token.Value.Equals("if", StringComparison.OrdinalIgnoreCase) && t.i + 1 < Current.Tokens.Count &&
+                Current.Pairs.TryGetValue(t.i + 1, out int close) && Current.Tokens[t.i + 1].Start < call.Start && Current.Tokens[close].Start >= call.End);
+            panel.Children.Add(new TextBlock { Text = CurrentExplanation().Explain(call, condition), TextWrapping = TextWrapping.Wrap,
+                FontSize = 14, LineHeight = 22, Foreground = MalachiteTheme.Text });
+            panel.Children.Add(new Expander { Header = "Исходный код · строка " + call.Line, Content = ScenarioSource(call.Start, call.End),
+                Foreground = MalachiteTheme.Muted, Margin = new Thickness(0, 8, 0, 0) });
+            var source = new Button { Content = "Перейти к строке " + call.Line, Margin = new Thickness(0, 6, 0, 6) };
+            source.Click += (_, _) => { ShowCodeArea(); GoTo(call.Start); };
+            panel.Children.Add(source);
+            if (help != null) panel.Children.Add(new Expander { Header = "Справка и данные БД", Content = HelpView(help), Foreground = MalachiteTheme.Muted });
+            ExplanationContent.Content = panel;
+        }
         if (ExplanationContent.Content is FrameworkElement element) element.MaxHeight = 380;
         HighlightScenario();
     }
@@ -45,13 +62,13 @@ public partial class QuestView
         Scenario_Click(this, new());
         GoTo(offset);
         ExplainAt(offset);
-        ScenarioItems.Children.OfType<Button>().FirstOrDefault(b => b.Tag is int at && at == offset)?.BringIntoView();
+        scenarioButtons.FirstOrDefault(b => b.Tag is int at && at == offset)?.BringIntoView();
         ShowHome(false);
     }
     void HighlightScenario()
     {
         if (ScenarioItems == null) return;
-        foreach (var button in ScenarioItems.Children.OfType<Button>())
+        foreach (var button in scenarioButtons)
         {
             bool selected = button.Tag is int offset && offset == explanationOffset;
             button.BorderBrush = selected ? MalachiteTheme.Accent : (Brush)FindResource("Line");

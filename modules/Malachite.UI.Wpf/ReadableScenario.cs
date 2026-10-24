@@ -1,42 +1,80 @@
 namespace QuestStudio;
 
-public sealed record ScenarioLine(string Text, int Offset, int Depth, bool Caution = false);
+public sealed record ScenarioLine(string Text, int Offset, int Depth, bool Caution = false)
+{
+    public int End { get; init; }
+    public bool Compact { get; init; }
+}
 
 // A read-only view of original token ranges, never of lowered/generated jumps.
 public sealed class ReadableScenario
 {
     readonly Analysis analysis;
-    readonly HelpService help;
+    readonly ScenarioExplanation explanation;
     readonly List<ScenarioLine> lines = [];
     readonly Dictionary<int, Call> calls;
-    ReadableScenario(Analysis analysis, HelpService help)
+    ReadableScenario(Analysis analysis, ScenarioExplanation explanation)
     {
-        this.analysis = analysis; this.help = help;
+        this.analysis = analysis; this.explanation = explanation;
         calls = analysis.Calls.GroupBy(c => c.Start).ToDictionary(g => g.Key, g => g.First());
     }
     public static IReadOnlyList<ScenarioLine> Describe(Analysis analysis, ScriptBlock block, HelpService help)
+        => Describe(analysis, block, new ScenarioExplanation(analysis, help));
+
+    public static IReadOnlyList<ScenarioLine> Describe(Analysis analysis, ScriptBlock block, ScenarioExplanation explanation)
     {
-        var reader = new ReadableScenario(analysis, help);
-        reader.lines.Add(new(block.World ? "При запуске карты" : "Этап «" + block.Name + "» · проверки по порядку", block.Start, 0));
+        var reader = new ReadableScenario(analysis, explanation);
+        var first = block.Calls.FirstOrDefault();
+        string title = block.World ? "При запуске карты" : first == null ? "Этап без вызовов" :
+            "Ориентир этапа: " + Short(explanation.Brief(first, first.Start < (block.Conditions?.End ?? 0)), 190);
+        reader.lines.Add(new(title + "\n" + block.Display + (block.World ? "" : " · проверки по порядку; соседние ЕСЛИ независимы, это не ИНАЧЕ") +
+            "\nЭто описание исходника, не состояние игры. Источники имён и полное объяснение — в раскрытии.", block.Start, 0) { Compact = true, End = block.End });
         var start = analysis.Tokens.FindIndex(t => t.Start >= block.Body.Start);
         var end = analysis.Tokens.FindIndex(t => t.Start >= block.Body.End);
-        if (start >= 0) reader.Sequence(start, end < 0 ? analysis.Tokens.Count : end, 0);
-        if (reader.lines.Count == 1) reader.lines.Add(new("В этом этапе нет действий.", block.Start, 0));
+        if (start >= 0)
+        {
+            int last = end < 0 ? analysis.Tokens.Count : end;
+            if (block.World && start < last) reader.lines.Add(new("При запуске · по порядку: " + reader.Summary(start, last, false), block.Start, 0) { Compact = true, End = block.End });
+            reader.Sequence(start, last, 0);
+        }
+        if (reader.lines.Count == 1) reader.lines.Add(new("В этом этапе нет действий.", block.Start, 0) { Compact = true });
         return reader.lines;
+    }
+    static string Short(string text, int limit) => text.Length <= limit ? text : text[..limit] + "… [полностью — в раскрытии]";
+    string Summary(int start, int end, bool conditions)
+    {
+        var parts = new List<string>();
+        for (int i = start; i < end;)
+        {
+            var token = analysis.Tokens[i];
+            if (!calls.TryGetValue(token.Start, out var call) || call.End > analysis.Tokens[end - 1].End)
+            {
+                parts.Add("объяснение пока недоступно / вложенная структура — см. раскрытие и исходный код");
+                break;
+            }
+            parts.Add(explanation.Brief(call, conditions));
+            do { i++; } while (i < end && analysis.Tokens[i].Start < call.End);
+        }
+        if (parts.Count == 0) return conditions ? "без условий" : "нет действий";
+        return string.Join("; ", parts.Take(6).Select(p => Short(p.Replace('\n', ' '), 240))) +
+            (parts.Count > 6 ? "; ещё " + (parts.Count - 6) + " — в раскрытии" : "");
     }
     void Sequence(int start, int end, int depth)
     {
-        if (depth > 32) { lines.Add(new("Глубокая вложенность: смотрите исходный код.", analysis.Tokens[start].Start, 32, true)); return; }
+        if (depth > 32) { lines.Add(new("Глубокая вложенность: смотрите исходный код.", analysis.Tokens[start].Start, 32, true) { Compact = true }); return; }
         var tokens = analysis.Tokens;
         for (int i = start; i < end;)
         {
-            if (lines.Count >= 500) { lines.Add(new("Показаны первые 500 строк описания. Продолжение — в исходном коде.", tokens[i].Start, depth, true)); return; }
+            if (lines.Count >= 500) { lines.Add(new("Показаны первые 500 строк описания. Продолжение — в исходном коде.", tokens[i].Start, depth, true) { Compact = true }); return; }
             var token = tokens[i];
             if (token.Value.Equals("if", StringComparison.OrdinalIgnoreCase) && i + 1 < end && tokens[i + 1].Value == "(" &&
                 analysis.Pairs.TryGetValue(i + 1, out var conditionEnd) && conditionEnd + 2 < end &&
                 tokens[conditionEnd + 1].Value.Equals("then", StringComparison.OrdinalIgnoreCase) && tokens[conditionEnd + 2].Value == "(" &&
                 analysis.Pairs.TryGetValue(conditionEnd + 2, out var yesEnd) && yesEnd < end)
             {
+                lines.Add(new("Ожидать одновременно: " + Summary(i + 2, conditionEnd, true) +
+                    "\n→ После выполнения условий · по порядку: " + Summary(conditionEnd + 3, yesEnd, false), token.Start, depth)
+                    { Compact = depth == 0, End = tokens[yesEnd].End });
                 lines.Add(new("ЕСЛИ выполнены все условия (И):", token.Start, depth));
                 if (conditionEnd == i + 2) lines.Add(new("Без условий — выполнять при достижении этой проверки.", token.Start, depth + 1));
                 else Conditions(i + 2, conditionEnd, depth + 1);
@@ -47,7 +85,8 @@ public sealed class ReadableScenario
                 if (i + 1 < end && tokens[i].Value.Equals("else", StringComparison.OrdinalIgnoreCase) && tokens[i + 1].Value == "(" &&
                     analysis.Pairs.TryGetValue(i + 1, out var noEnd) && noEnd < end)
                 {
-                    lines.Add(new("ИНАЧЕ · если условия этой проверки не выполнены:", tokens[i].Start, depth));
+                    lines.Add(new("ИНАЧЕ · если условия этой проверки не выполнены: " + Summary(i + 2, noEnd, false), tokens[i].Start, depth)
+                        { Compact = depth == 0, End = tokens[noEnd].End });
                     if (noEnd == i + 2) lines.Add(new("Нет действий.", tokens[i].Start, depth + 1));
                     else Sequence(i + 2, noEnd, depth + 1);
                     i = noEnd + 1;
@@ -56,14 +95,15 @@ public sealed class ReadableScenario
             }
             if (calls.TryGetValue(token.Start, out var call) && call.End <= tokens[end - 1].End)
             {
-                lines.Add(new(ExplainCall(call, 0), token.Start, depth, !help.Entries.ContainsKey(call.Name) && !analysis.Blocks.Any(b => b.Name.Equals(call.Name, StringComparison.OrdinalIgnoreCase))));
+                var text = explanation.Explain(call);
+                lines.Add(new(text, token.Start, depth, text.StartsWith("Объяснение пока недоступно", StringComparison.Ordinal)) { End = call.End });
                 do { i++; } while (i < end && tokens[i].Start < call.End);
                 continue;
             }
             // Preserve unsupported syntax as a visible source fragment, not a guessed action.
             int last = i;
             while (last + 1 < end && tokens[last + 1].Line == token.Line) last++;
-            lines.Add(new("Не переведено: " + analysis.Text[token.Start..tokens[last].End], token.Start, depth, true));
+            lines.Add(new("Объяснение пока недоступно. Код: " + analysis.Text[token.Start..tokens[last].End], token.Start, depth, true) { End = tokens[last].End });
             i = last + 1;
         }
     }
@@ -72,39 +112,17 @@ public sealed class ReadableScenario
         for (int i = start; i < end;)
         {
             var token = analysis.Tokens[i];
+            if (lines.Count >= 500)
+            {
+                lines.Add(new("Показаны первые 500 строк описания. Остальные условия — в исходном коде.", token.Start, depth, true) { Compact = true });
+                return;
+            }
             if (calls.TryGetValue(token.Start, out var call))
             {
-                lines.Add(new(ExplainCall(call, 0), token.Start, depth));
+                lines.Add(new(explanation.Explain(call, true), token.Start, depth) { End = call.End });
                 do { i++; } while (i < end && analysis.Tokens[i].Start < call.End);
             }
-            else { lines.Add(new("Значение должно быть ненулевым: «" + token.Value + "»", token.Start, depth)); i++; }
+            else { lines.Add(new("Объяснение пока недоступно. Условие должно быть ненулевым. Код: «" + token.Value + "»", token.Start, depth, true) { End = token.End }); i++; }
         }
-    }
-    string Argument(Call call, int index, int depth)
-    {
-        var range = call.Arguments[index];
-        var nested = analysis.Calls.FirstOrDefault(c => c.Start >= range.Start && c.End <= range.End && analysis.Text[range.Start..c.Start].Trim().Length == 0 && analysis.Text[c.End..range.End].Trim().Length == 0);
-        return nested != null && depth < 16 ? "(" + ExplainCall(nested, depth + 1) + ")" : analysis.Slice(range).Trim();
-    }
-    string ExplainCall(Call call, int depth)
-    {
-        string A(int n) => Argument(call, n, depth);
-        var name = call.Name.ToLowerInvariant();
-        int count = call.Arguments.Count;
-        if (count == 2 && name is "isgreater" or "isless" or "isequal" or "isequalstring")
-            return A(0) + (name == "isgreater" ? " больше " : name == "isless" ? " меньше " : " равно ") + A(1);
-        if (count == 1 && name == "partydisguisematches") return "Одежда всех живых участников партии игрока 0 соответствует профилю " + A(0) + ". У каждого достаточно разрешённой брони и нет посторонней брони.";
-        if (count == 1 && name == "not") return "НЕ: " + A(0) + " (значение равно нулю)";
-        if (count == 2 && name == "gsgetvar") return "значение переменной " + A(1) + " для контекста " + A(0);
-        if (count == 3 && name == "gssetvar") return "Установить переменную " + A(1) + " = " + A(2) + " для контекста " + A(0);
-        if (count == 0 && name == "getworldtime") return "текущее время игрового мира";
-        if (count == 0 && name == "killscript") return "Снять текущий скрипт с дальнейшего обслуживания. Оставшиеся действия этой ветки продолжатся.";
-        if (count == 1 && name == "sleep") return "Подождать " + A(0) + " игровых сегментов (не секунд). Другие скрипты продолжают работать.";
-        if (count == 2 && name == "questcomplete") return "Завершить квест " + A(1) + " для игрока " + A(0);
-        if (analysis.Blocks.Any(b => b.Name.Equals(call.Name, StringComparison.OrdinalIgnoreCase)))
-            return "Запустить экземпляр этапа «" + call.Name + "», не ожидая завершения. Аргументы: " + string.Join(", ", Enumerable.Range(0, count).Select(A));
-        if (help.Entries.TryGetValue(call.Name, out var entry))
-            return entry.Purpose + string.Concat(Enumerable.Range(0, count).Select(n => "\n• " + (n < entry.Arguments.Length ? entry.Arguments[n] : "аргумент " + (n + 1)) + ": " + A(n)));
-        return "Неизвестный вызов «" + call.Name + "». Смысл не установлен. Код: " + analysis.Text[call.Start..call.End];
     }
 }
