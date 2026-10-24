@@ -69,6 +69,7 @@ public partial class QuestView
         if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(DatabaseChanged); return; }
         foreach (var hover in hovers) hover.Close();
         scenarioExplanation = null;
+        atlasDataRevision++;
         atlasExplanations.Clear();
         codeContext = null;
         RefreshQuestAtlas();

@@ -16,6 +16,7 @@ public partial class QuestView
     }
     string? atlasQuest;
     bool atlasUpdating;
+    int atlasRefreshRevision;
     readonly List<string> atlasIndexErrors = [];
     static string AtlasTextHash(string text) => "text:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text)));
     static string AtlasQuestTitle(string quest, WorkspaceSnapshot snapshot)
@@ -30,16 +31,23 @@ public partial class QuestView
         // Index/DB changes must also refresh a stationary inspector in the code view.
         explainedAnalysis = null;
         if (stopped || QuestAtlasPanel == null || atlasUpdating || Current == null) return;
+        int revision = ++atlasRefreshRevision;
         if (QuestAtlasPanel.Visibility != Visibility.Visible) { ExplainAt(CodeEditor.CaretIndex); return; }
         atlasUpdating = true;
         try
         {
-            var snapshot = Host.Workspace.Snapshot(); var maps = AtlasSources();
-            var current = maps.First(m => m.Path.Equals(AtlasPath, StringComparison.OrdinalIgnoreCase));
-            var direct = current.Points.Where(p => p.Quest.Length > 0).Select(p => p.Quest).ToHashSet(StringComparer.Ordinal);
+            var snapshot = Host.Workspace.Snapshot();
+            // Inventory uses the already available current analysis, never an overview or explanations.
+            var direct = Current.Calls.Select(c => QuestAtlas.Literal(Current, c, 1) is { } key
+                ? QuestStateReference.Supports(c.Name) ? QuestAtlas.QuestKey(key)
+                : c.Name.Equals("QuestComplete", StringComparison.OrdinalIgnoreCase) ? key : null : null)
+                .OfType<string>().ToHashSet(StringComparer.Ordinal);
+            var briefings = Current.Calls.Where(c => QuestStateReference.Supports(c.Name))
+                .Select(c => QuestAtlas.Literal(Current, c, 1)?.Split('.'))
+                .Where(p => p is { Length: 3 } && p[0] == "b").Select(p => p![2]).ToHashSet(StringComparer.Ordinal);
             var quests = new HashSet<string>(direct, StringComparer.Ordinal);
             if (AtlasIndirect.IsChecked == true)
-                foreach (var briefing in snapshot.Records.Where(r => r.Reference.TableKey == "quests.briefings" && current.Briefings.Any(b => b.Name == r.Name)))
+                foreach (var briefing in snapshot.Records.Where(r => r.Reference.TableKey == "quests.briefings" && briefings.Contains(r.Name)))
                 foreach (var field in briefing.Fields.Where(f => f.FieldId is 6 or 7 && f.Value.Kind == "StringList"))
                 foreach (var key in field.Value.ExactValue.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
                     if (QuestAtlas.QuestKey(key) is { } name) quests.Add(name);
@@ -51,27 +59,42 @@ public partial class QuestView
                 var inventory = new ListCollectionView(items);
                 inventory.GroupDescriptions.Add(new PropertyGroupDescription(nameof(AtlasQuest.Group))); AtlasQuests.ItemsSource = inventory;
             }
-            atlasQuest ??= items.FirstOrDefault()?.Key;
             AtlasQuests.SelectedItem = AtlasQuests.Items.OfType<AtlasQuest>().FirstOrDefault(q => q.Key == atlasQuest);
             AtlasNodes.Children.Clear();
-            AtlasStatus.Text = (folderIndexing ? folderProgress : mapsStatus) + $" · просмотрено {maps.Length} карт · ошибок индекса {atlasIndexErrors.Count}" +
+            AtlasStatus.Text = (folderIndexing ? "Индексируется… " + folderProgress : mapsStatus) + $" · индекс диска: {indexedMaps.Count} карт · ошибок индекса {atlasIndexErrors.Count}" +
                 (snapshot.Modified ? " · снимок БД: есть несохранённые изменения" : " · текущий снимок БД");
             AtlasStatus.ToolTip = "Индекс — снимок диска на момент чтения. Открытые вкладки заменяют его текущим текстом. Обновить диск: Папка MOB…";
-            AtlasNodes.Children.Add(AtlasLazy("Просмотренные карты и пробелы источников", () => AtlasCoverage(maps)));
-            if (atlasQuest == null) { AtlasNodes.Children.Add(AtlasNote("На этой карте квесты не найдены. Включите квесты через брифинги или откройте обзор из GS-строки Инспектора.")); return; }
-            bool state = atlasQuest.StartsWith("@GS:", StringComparison.Ordinal);
-            var route = state ? new QuestRoute(atlasKeys.GetValueOrDefault(atlasQuest[4..]) ?? [], []) : QuestAtlas.Build(atlasQuest, maps, snapshot);
-            AtlasNodes.Children.Add(new TextBlock { Text = state ? "Общий ключ " + atlasQuest[4..] : AtlasQuestTitle(atlasQuest, snapshot), FontSize = 20, TextWrapping = TextWrapping.Wrap, Foreground = MalachiteTheme.Accent, Margin = new(5, 10, 5, 8) });
+            AtlasNodes.Children.Add(AtlasLazyAsync("Просмотренные карты и пробелы источников", async () => AtlasCoverage((await AtlasSourcesAsync()).Maps)));
+            if (atlasQuest == null) { AtlasNodes.Children.Add(AtlasNote(items.Length == 0 ? "На этой карте квесты не найдены. Включите квесты через брифинги или откройте обзор из GS-строки Инспектора." : "Выберите квест слева. Группы и объяснения раскрываются по запросу.")); return; }
+            _ = LoadAtlasOverviewAsync(atlasQuest, snapshot, revision);
+        }
+        finally { atlasUpdating = false; }
+    }
+    async Task LoadAtlasOverviewAsync(string quest, WorkspaceSnapshot snapshot, int revision)
+    {
+        bool Active() => !stopped && revision == atlasRefreshRevision && QuestAtlasPanel.Visibility == Visibility.Visible;
+        var loading = AtlasNote("Индексируется… подготовка выбранного квеста", true); AtlasNodes.Children.Add(loading);
+        try
+        {
+            var index = await AtlasSourcesAsync();
+            if (!Active()) return;
+            var maps = index.Maps;
+            bool state = quest.StartsWith("@GS:", StringComparison.Ordinal);
+            var route = await Task.Run(() => state ? new QuestRoute(index.Keys.GetValueOrDefault(quest[4..]) ?? [], []) : QuestAtlas.Build(quest, maps, snapshot));
+            if (!Active()) return;
+            AtlasNodes.Children.Remove(loading);
+            AtlasStatus.Text += $" · просмотрено {maps.Length} карт (открытые вкладки заменяют диск)";
+            AtlasNodes.Children.Add(new TextBlock { Text = state ? "Общий ключ " + quest[4..] : AtlasQuestTitle(quest, snapshot), FontSize = 20, TextWrapping = TextWrapping.Wrap, Foreground = MalachiteTheme.Accent, Margin = new(5, 10, 5, 8) });
             AtlasNodes.Children.Add(AtlasNote("Связь по данным — возможная зависимость. Порядок прохождения, текущие GS, выбор игрока и внешние события неизвестны. 0 — скрыт; 1 — доступен; 2 — выполнен; 3 — провален (только состояния квестов).", true));
-            if (!state) AddAtlasQuestText(atlasQuest, snapshot);
+            if (!state) AddAtlasQuestText(quest, snapshot);
             var keys = route.Points.Where(p => p.Key.Length > 0).Select(p => p.Key).ToHashSet(StringComparer.Ordinal);
-            var uses = route.Points.Concat(keys.SelectMany(k => atlasKeys.GetValueOrDefault(k) ?? []))
-                .Where(p => p.Key.Length > 0 || p.Quest == atlasQuest && p.CallTarget == null && p.Action.StartsWith("QuestComplete", StringComparison.OrdinalIgnoreCase))
+            var uses = route.Points.Concat(keys.SelectMany(k => index.Keys.GetValueOrDefault(k) ?? []))
+                .Where(p => p.Key.Length > 0 || p.Quest == quest && p.CallTarget == null && p.Action.StartsWith("QuestComplete", StringComparison.OrdinalIgnoreCase))
                 .DistinctBy(p => p.Id).ToArray();
             AddAtlasGroup("Где состояние меняется", uses.Where(p => p.Write), maps, snapshot, route);
             AddAtlasGroup("Кто его проверяет", uses.Where(p => !p.Write), maps, snapshot, route);
             var locations = uses.Concat(route.Points).Where(p => p.Record == null).Select(p => (p.Map, p.Script)).ToHashSet();
-            var neighbours = maps.SelectMany(m => m.Points).Where(p => p.Quest.Length > 0 && p.Quest != atlasQuest && locations.Contains((p.Map, p.Script)))
+            var neighbours = maps.SelectMany(m => m.Points).Where(p => p.Quest.Length > 0 && p.Quest != quest && locations.Contains((p.Map, p.Script)))
                 .GroupBy(p => p.Quest).ToArray();
             AtlasNodes.Children.Add(new TextBlock { Text = "Какие задания зависят от него", FontSize = 17, Foreground = MalachiteTheme.Accent, Margin = new(5, 16, 5, 8) });
             if (neighbours.Length == 0) AtlasNodes.Children.Add(AtlasNote("Связанные задания в просмотренных Script не найдены; возможны внешние связи.", true));
@@ -82,7 +105,7 @@ public partial class QuestView
                 {
                     var panel = new StackPanel();
                     panel.Children.Add(AtlasNote("Общий Script / GS-ключ связывает эти места; причинность и направление прохождения не доказаны.", true));
-                    foreach (var point in points) panel.Children.Add(AtlasPointView(point, maps, snapshot, route));
+                    foreach (var point in points) panel.Children.Add(AtlasPointEntry(point, maps, snapshot, route));
                     var open = new Button { Content = "Весь квест: " + neighbour.Key }; open.Click += (_, _) => OpenWholeQuest(points[0]); panel.Children.Add(open);
                     return panel;
                 }));
@@ -90,12 +113,12 @@ public partial class QuestView
             AtlasNodes.Children.Add(AtlasLazy("Запуски этапов и дочерние Script", () =>
             {
                 var panel = new StackPanel();
-                foreach (var point in route.Points.Where(p => p.CallTarget != null)) panel.Children.Add(AtlasPointView(point, maps, snapshot, route));
+                foreach (var point in route.Points.Where(p => p.CallTarget != null)) panel.Children.Add(AtlasPointEntry(point, maps, snapshot, route));
                 foreach (var map in maps)
                 foreach (var script in route.Points.Where(p => p.Map == map.Path && p.Record == null).Select(p => p.Script).Distinct(StringComparer.OrdinalIgnoreCase))
                 {
                     foreach (var call in map.Calls.Where(c => c.To.Equals(script, StringComparison.OrdinalIgnoreCase)))
-                        panel.Children.Add(AtlasLink(new(map.Path + "@launch" + call.Offset, atlasQuest, "", "", map.Path, map.Hash, call.From, call.Offset, call.Line, "", "", false),
+                        panel.Children.Add(AtlasLink(new(map.Path + "@launch" + call.Offset, quest, "", "", map.Path, map.Hash, call.From, call.Offset, call.Line, "", "", false),
                             Path.GetFileName(map.Path) + " · " + call.From + ":" + call.Line + " → " + script + " · прямой вызов, выполнение не доказано"));
                     if (!map.Calls.Any(c => c.To.Equals(script, StringComparison.OrdinalIgnoreCase)) && !script.Equals("WorldScript", StringComparison.OrdinalIgnoreCase))
                         panel.Children.Add(AtlasNote(Path.GetFileName(map.Path) + " · " + script + ": источник запуска не найден; возможное внешнее событие неизвестно.", true));
@@ -103,14 +126,14 @@ public partial class QuestView
                 return panel;
             }));
         }
-        finally { atlasUpdating = false; }
+        catch (Exception ex) { if (Active()) loading.Text = "Не удалось построить обзор: " + ex.Message; }
     }
     sealed record AtlasQuest(string Key, string Title, bool Indirect)
     {
         public string Group => Indirect ? "Через брифинги / выбранные по ссылке" : "В скриптах текущей карты";
         public override string ToString() => Title + " · " + Key;
     }
-    void Atlas_Click(object sender, RoutedEventArgs e) { QuestAtlasPanel.Visibility = Visibility.Visible; CodeButton.BorderBrush = (Brush)FindResource("Line"); RefreshQuestAtlas(); }
+    void Atlas_Click(object sender, RoutedEventArgs e) { atlasQuest = null; QuestAtlasPanel.Visibility = Visibility.Visible; CodeButton.BorderBrush = (Brush)FindResource("Line"); RefreshQuestAtlas(); }
     void AtlasClose_Click(object sender, RoutedEventArgs e) => Code_Click(sender, e);
     void AtlasSelection_Changed(object sender, SelectionChangedEventArgs e) { if (!atlasUpdating && AtlasQuests.SelectedItem is AtlasQuest quest) { atlasQuest = quest.Key; RefreshQuestAtlas(); } }
     void AtlasScope_Changed(object sender, RoutedEventArgs e) => RefreshQuestAtlas();

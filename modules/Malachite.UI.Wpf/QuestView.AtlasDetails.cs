@@ -43,12 +43,19 @@ public partial class QuestView
     }
     void AddAtlasGroup(string title, IEnumerable<QuestPoint> points, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
     {
-        AtlasNodes.Children.Add(new TextBlock { Text = title, FontSize = 17, Foreground = MalachiteTheme.Accent, Margin = new(5, 16, 5, 8) });
         var rows = points.OrderBy(p => p.Record == null).ThenBy(p => p.Map).ThenBy(p => p.Line).ToArray();
-        if (rows.Length == 0) AtlasNodes.Children.Add(AtlasNote("В просмотренных источниках не найдено; это пробел, а не доказательство отсутствия.", true));
-        foreach (var point in rows) AtlasNodes.Children.Add(AtlasPointView(point, maps, snapshot, route));
+        AtlasNodes.Children.Add(AtlasLazy(title + " · " + rows.Length, () =>
+        {
+            var panel = new StackPanel();
+            if (rows.Length == 0) panel.Children.Add(AtlasNote("В просмотренных источниках не найдено; это пробел, а не доказательство отсутствия.", true));
+            foreach (var point in rows) panel.Children.Add(AtlasPointEntry(point, maps, snapshot, route));
+            return panel;
+        }));
     }
-    FrameworkElement AtlasPointView(QuestPoint point, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
+    FrameworkElement AtlasPointEntry(QuestPoint point, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route) =>
+        AtlasLazyAsync(Path.GetFileName(point.Map) + " · " + point.Script + (point.Line > 0 ? " · строка " + point.Line : ""),
+            () => AtlasPointViewAsync(point, maps, snapshot, route));
+    async Task<FrameworkElement> AtlasPointViewAsync(QuestPoint point, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
     {
         var panel = new StackPanel(); panel.Children.Add(AtlasLink(point));
         if (point.Record != null)
@@ -69,12 +76,21 @@ public partial class QuestView
         }
         else if (maps.FirstOrDefault(m => m.Path.Equals(point.Map, StringComparison.OrdinalIgnoreCase)) is { Text.Length: > 0 } map)
         {
-            var context = AtlasExplain(map, snapshot); var position = context.Index.At(point.Offset);
-            var call = context.Analysis.Calls.FirstOrDefault(c => c.Start == point.Offset);
-            panel.Children.Add(AtlasNote(call == null ? point.Action : context.Explanation.Explain(call, position.Condition)));
+            var context = await AtlasExplainAsync(map, snapshot);
+            var position = context.Index.At(point.Offset);
+            var text = await Task.Run(() =>
+            {
+                lock (context)
+                {
+                    var call = context.Analysis.Calls.FirstOrDefault(c => c.Start == point.Offset);
+                    return (Explanation: call == null ? point.Action : context.Explanation.Explain(call, position.Condition),
+                        Summary: position.Block == null ? "" : position.Rule == null ? context.Index.StageSummary(position.Block, context.Explanation) : context.Index.RuleSummary(position.Rule, context.Explanation));
+                }
+            });
+            panel.Children.Add(AtlasNote(text.Explanation));
             if (position.Block != null)
             {
-                panel.Children.Add(AtlasNote(position.Rule == null ? context.Index.StageSummary(position.Block, context.Explanation) : context.Index.RuleSummary(position.Rule, context.Explanation), true));
+                panel.Children.Add(AtlasNote(text.Summary, true));
                 panel.Children.Add(AtlasChildren(map, position.Block.Name, snapshot, new(StringComparer.OrdinalIgnoreCase)));
                 if (!map.Calls.Any(c => c.To.Equals(position.Block.Name, StringComparison.OrdinalIgnoreCase)) && !position.Block.World)
                     panel.Children.Add(AtlasNote("Входящий запуск этого Script не найден. Внешнее событие / достижимость неизвестны.", true));
@@ -87,10 +103,21 @@ public partial class QuestView
                 var other = new StackPanel();
                 foreach (var use in nearby)
                 {
-                    other.Children.Add(AtlasLink(use)); var usePosition = context.Index.At(use.Offset);
-                    var useCall = context.Analysis.Calls.FirstOrDefault(c => c.Start == use.Offset);
-                    other.Children.Add(AtlasNote(useCall == null ? use.Action : context.Explanation.Explain(useCall, usePosition.Condition)));
-                    if (usePosition.Rule != null) other.Children.Add(AtlasNote(context.Index.RuleSummary(usePosition.Rule, context.Explanation), true));
+                    other.Children.Add(AtlasLazyAsync("Строка " + use.Line + " · " + use.Script, async () =>
+                    {
+                        var detail = new StackPanel(); detail.Children.Add(AtlasLink(use));
+                        string description = await Task.Run(() =>
+                        {
+                            lock (context)
+                            {
+                                var usePosition = context.Index.At(use.Offset);
+                                var useCall = context.Analysis.Calls.FirstOrDefault(c => c.Start == use.Offset);
+                                return (useCall == null ? use.Action : context.Explanation.Explain(useCall, usePosition.Condition)) +
+                                    (usePosition.Rule == null ? "" : "\n" + context.Index.RuleSummary(usePosition.Rule, context.Explanation));
+                            }
+                        });
+                        detail.Children.Add(AtlasNote(description)); return detail;
+                    }));
                 }
                 return other;
             }));
@@ -106,18 +133,22 @@ public partial class QuestView
     }
     FrameworkElement AtlasChildren(QuestMap map, string script, WorkspaceSnapshot snapshot, HashSet<string> ancestors)
     {
-        return AtlasLazy("Дочерние Script · " + script, () =>
+        return AtlasLazyAsync("Дочерние Script · " + script, async () =>
         {
             var panel = new StackPanel();
             var next = new HashSet<string>(ancestors, StringComparer.OrdinalIgnoreCase);
             if (!next.Add(script) || next.Count > 32) { panel.Children.Add(AtlasNote("Цикл / глубина цепочки; продолжение смотрите в коде.", true)); return panel; }
-            var context = AtlasExplain(map, snapshot);
+            var context = await AtlasExplainAsync(map, snapshot);
             foreach (var link in map.Calls.Where(c => c.From.Equals(script, StringComparison.OrdinalIgnoreCase)))
             {
                 panel.Children.Add(AtlasLink(new(map.Path + "@" + link.Offset, "", "", "", map.Path, map.Hash, script, link.Offset, link.Line, "", "", false),
                     Path.GetFileName(map.Path) + " · " + script + ":" + link.Line + " → " + link.To));
                 var block = context.Analysis.Blocks.FirstOrDefault(b => b.Name.Equals(link.To, StringComparison.OrdinalIgnoreCase));
-                if (block != null) panel.Children.Add(AtlasNote(context.Index.StageSummary(block, context.Explanation)));
+                if (block != null) panel.Children.Add(AtlasLazyAsync("Объяснение этапа · " + block.Name, async () =>
+                {
+                    string summary = await Task.Run(() => { lock (context) return context.Index.StageSummary(block, context.Explanation); });
+                    return AtlasNote(summary);
+                }));
                 panel.Children.Add(AtlasChildren(map, link.To, snapshot, next));
             }
             if (panel.Children.Count == 0) panel.Children.Add(AtlasNote("Прямых вызовов дочерних Script не найдено; внешние события не определены.", true));

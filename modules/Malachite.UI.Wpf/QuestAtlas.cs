@@ -124,15 +124,21 @@ public static class QuestAtlas
             }
             points.AddRange(map.Points.Where(p => p.Quest.Length == 0 && scripts.Contains(p.Script)).Select(p => p with { Quest = quest }));
         }
+        // Match only relevant keys / Script targets instead of comparing every point pair.
+        var reads = points.Where(p => !p.Write && p.Key.Length > 0).ToLookup(p => p.Key, StringComparer.Ordinal);
+        var scriptPoints = points.Where(p => p.Record == null).GroupBy(p => p.Map, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.ToLookup(p => p.Script, StringComparer.OrdinalIgnoreCase), StringComparer.Ordinal);
         foreach (var source in points)
-        foreach (var target in points)
         {
-            if (source.Id == target.Id) continue;
-            if (source.Key.Length > 0 && source.Key == target.Key && source.Write && !target.Write &&
-                (source.Context == target.Context || source.Record != null) && source.WrittenValue is double value && target.Predicate is { } predicate && predicate.Compatible(value, source.Maximum))
-                edges.Add(new(source.Id, target.Id, "Состояние совместимо с проверкой " + predicate.Description + "; остальные условия и достижимость не доказаны" + (source.Record != null ? "; контекст брифинга требует проверки" : ""), false));
-            if (source.CallTarget != null && target.Record == null && source.Map == target.Map && source.CallTarget.Equals(target.Script, StringComparison.OrdinalIgnoreCase))
-                edges.Add(new(source.Id, target.Id, "Этот вызов запускает Script «" + target.Script + "»; его условия проверяются отдельно", true));
+            if (source.Write && source.Key.Length > 0 && source.WrittenValue is double value)
+                foreach (var target in reads[source.Key])
+                    if (source.Id != target.Id && (source.Context == target.Context || source.Record != null) &&
+                        target.Predicate is { } predicate && predicate.Compatible(value, source.Maximum))
+                        edges.Add(new(source.Id, target.Id, "Состояние совместимо с проверкой " + predicate.Description + "; остальные условия и достижимость не доказаны" + (source.Record != null ? "; контекст брифинга требует проверки" : ""), false));
+            if (source.CallTarget != null && scriptPoints.TryGetValue(source.Map, out var targets))
+                foreach (var target in targets[source.CallTarget])
+                    if (source.Id != target.Id)
+                        edges.Add(new(source.Id, target.Id, "Этот вызов запускает Script «" + target.Script + "»; его условия проверяются отдельно", true));
         }
         return new(points.DistinctBy(p => p.Id).ToArray(), edges.Distinct().ToArray());
     }
