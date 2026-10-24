@@ -94,8 +94,9 @@ public sealed class ScenarioExplanation
         string key = analysis.Slice(call.Arguments[1]).Trim();
         if (context == null) return "переменной " + key;
         var warnings = (context.FocusText ?? "").Split('\n').Where(t =>
-            t.Contains("отсутствует", StringComparison.OrdinalIgnoreCase) || t.Contains("неоднознач", StringComparison.OrdinalIgnoreCase) ||
-            t.Contains("не найден", StringComparison.OrdinalIgnoreCase) || t.Contains("несколько", StringComparison.OrdinalIgnoreCase));
+            t.StartsWith("Подпункт #subobj ", StringComparison.Ordinal) || t.StartsWith("В тексте несколько #subobj ", StringComparison.Ordinal) ||
+            t.StartsWith("Текст QUEST ", StringComparison.Ordinal) || t.StartsWith("Квест не найден ", StringComparison.Ordinal) ||
+            t.StartsWith("Несколько записей квеста ", StringComparison.Ordinal));
         return context.Title.Replace("\n", " · ") +
             " [текущий снимок БД / связанный текст QUEST; ключ " + key + "]" +
             (snapshot!.Modified ? " [есть несохранённые изменения БД]" : "") +

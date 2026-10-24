@@ -48,7 +48,7 @@ public partial class QuestView
             source.Click += (_, _) => { ShowCodeArea(); GoTo(call.Start); };
             panel.Children.Add(source);
             if (help != null) panel.Children.Add(new Expander { Header = "Справка и данные БД", Content = HelpView(help), Foreground = MalachiteTheme.Muted });
-            ExplanationContent.Content = panel;
+            ExplanationContent.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         }
         if (ExplanationContent.Content is FrameworkElement element) element.MaxHeight = 380;
         HighlightScenario();
