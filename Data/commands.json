@@ -1801,6 +1801,47 @@
       "verification": "name_and_signature_verified_in_native_binary"
     },
     {
+      "name": "PlayAnimationLoop",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        },
+        {
+          "position": 2,
+          "type": "string",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "PlayAnimationLoop(arg1: object, arg2: string)",
+      "descriptor": "os",
+      "note": "Аддон AD11: непрерывный цикл; UMClear/UMRevenge и ожидание не снимают его. Действие юнита, урон или StopAnimationLoop отменяют цикл; запрос сохраняется до готовности юнита. Если объект ещё не создан, вызов вне синхронных циклов ожидает его в том же потоке скрипта.",
+      "verification": "addon_AD11_source"
+    },
+    {
+      "name": "StopAnimationLoop",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [
+        {
+          "position": 1,
+          "type": "object",
+          "global_variable_required": false
+        }
+      ],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "StopAnimationLoop(arg1: object)",
+      "descriptor": "o",
+      "note": "Аддон AD11: снять цикл, сохранив уже выданный приказ движения или атаки.",
+      "verification": "addon_AD11_source"
+    },
+    {
       "name": "PlayFX",
       "kind": "procedure",
       "return_type": "void",
