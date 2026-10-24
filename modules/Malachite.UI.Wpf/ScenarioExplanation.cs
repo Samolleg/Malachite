@@ -119,7 +119,9 @@ public sealed class ScenarioExplanation
     string ShortArgument(Call call, int index, int depth)
     {
         var nested = Nested(call.Arguments[index]);
-        if (nested != null) return Explain(nested, false, depth + 1);
+        if (nested != null) return nested.Name.ToLowerInvariant() is "getobjectbyid" or "gsgetvar" or "getleverstate" or "distanceunitpoint" or
+            "getworldtime" or "getunitofplayer" or "add" or "random" or "isdead" or "isgreater" or "isless" or "isequal" or "not"
+                ? Explain(nested, false, depth + 1) : OneLine(analysis.Slice(call.Arguments[index]));
         string raw = analysis.Slice(call.Arguments[index]).Trim();
         if (raw.Equals("this", StringComparison.OrdinalIgnoreCase)) return "этот объект";
         bool shadowed = analysis.Declarations.GetValueOrDefault(call.Owner)?.Any(p => p.Name.Equals(raw, StringComparison.OrdinalIgnoreCase)) == true;
@@ -207,7 +209,20 @@ public sealed class ScenarioExplanation
         if (count == 2 && name == "gsdelvar") return (QuestTarget(call) ?? Variable(call, depth)) + " — скрыт (сброшен)" + Player(call, depth);
         if (count == 0 && name == "killscript") return "этот скрипт больше не проверяется";
         if (count == 0 && name == "getworldtime") return "текущее время игрового мира";
+        if (count == 2 && name == "getunitofplayer") return "юнит партии " + A(1) + Player(call, depth);
+        if (count >= 2 && name == "add") return string.Join(" + ", Enumerable.Range(0, count).Select(A));
+        if (count is 1 or 2 && name == "random") return "случайное число " + (count == 1 ? "до " + A(0) : "от " + A(0) + " до " + A(1));
         if (count == 1 && name == "sleep") return "подождать " + A(0);
+        if (count == 1 && name == "umclear") return "очистить поведение: " + A(0);
+        if (count == 1 && name == "umplayer") return "передать игроку управление: " + A(0);
+        if (count == 1 && name == "run") return "включить бег: " + A(0);
+        if (count == 3 && name == "umsentry") return "добавить пост: " + A(0) + " → точка (" + A(1) + ", " + A(2) + ")";
+        if (count is 3 or 5 && name == "createvoicefx")
+        {
+            string raw = analysis.Slice(call.Arguments[1]).Trim();
+            string sound = raw.Length >= 2 && raw[0] == '"' && raw[^1] == '"' ? Path.GetFileName(raw[1..^1]) : A(1);
+            return "озвучить " + A(0) + ": " + sound;
+        }
         if (count == 2 && name is "giveitem" or "givequestitem") return "выдать игроку" + (analysis.Slice(call.Arguments[0]).Trim() == "0" ? "" : " " + A(0)) + " " + A(1);
         if (count == 2 && name == "sendstringevent" && QuestAtlas.Literal(analysis, call, 1) is { } message && message.StartsWith("#output ", StringComparison.OrdinalIgnoreCase))
         {
@@ -225,10 +240,10 @@ public sealed class ScenarioExplanation
             return "запустить этап " + call.Name;
         if (!help.Entries.TryGetValue(call.Name, out var entry)) return Unknown(call);
         string purpose = OneLine(entry.Purpose.Split(new[] { ". ", ".\n" }, StringSplitOptions.None)[0]).TrimEnd('.');
+        if (purpose.StartsWith("Наша команда аддона: ", StringComparison.Ordinal)) purpose = purpose[20..];
         if (purpose.StartsWith("Возвращает ", StringComparison.Ordinal)) purpose = purpose[11..];
         if (purpose.Length > 80) purpose = purpose[..77] + "…";
-        return purpose + (count == 0 ? "" : ": " + string.Join(", ", Enumerable.Range(0, count).Select(n =>
-            (n < entry.Arguments.Length ? entry.Arguments[n] + " " : "") + A(n)))) + (condition ? " — ненулевое значение" : "");
+        return purpose + (count == 0 ? "" : ": " + string.Join(", ", Enumerable.Range(0, count).Select(A))) + (condition ? " — ненулевое значение" : "");
     }
     static string Comparison(string name) => name == "isgreater" ? " больше " : name == "isless" ? " меньше " : " равно ";
 
