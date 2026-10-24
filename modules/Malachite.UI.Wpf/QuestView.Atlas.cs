@@ -98,7 +98,7 @@ public partial class QuestView
             string issued = Places(1), completed = Places(2);
             AtlasNodes.Children.Add(AtlasNote((issued.Length > 0 ? "Выдаётся: " + issued : "Выдача в скриптах не найдена") + " · " +
                 (completed.Length > 0 ? "Завершается: " + completed : "Завершение в скриптах не найдено") + " · Проверяется на " + uses.Where(p => !p.Write).Select(p => p.Map).Distinct().Count() + " картах"));
-            AtlasNodes.Children.Add(AtlasNote(quest + " · 0 — скрыт; 1 — доступен; 2 — выполнен; 3 — провален", true));
+            AtlasNodes.Children.Add(AtlasNote(quest + " · 0 — скрыт / не выдан; 1 — выдан; 2 — выполнен; 3 — провален", true));
             if (!state) AddAtlasQuestText(quest, snapshot);
             AddAtlasGroup("Где состояние меняется", uses.Where(p => p.Write), maps, snapshot, route);
             AddAtlasGroup("Кто его проверяет", uses.Where(p => !p.Write), maps, snapshot, route);
@@ -106,18 +106,19 @@ public partial class QuestView
                 AddAtlasGroup("Вызовы QuestComplete по точному имени БД", route.Points.Where(p => p.Action.StartsWith("QuestComplete", StringComparison.OrdinalIgnoreCase)), maps, snapshot, route);
             if (includeBriefings) AddAtlasGroup("Через брифинги · действия БД и строки использования", route.Points.Where(p => p.Record != null || p.Key.StartsWith("b.", StringComparison.Ordinal)), maps, snapshot, route);
             AddAtlasDependencies(quest, maps, snapshot, route);
-            AtlasNodes.Children.Add(AtlasLazy("Запуски этапов и дочерние Script", () =>
+            var starts = route.Points.Where(p => p.CallTarget != null).ToArray();
+            var scripts = route.Points.Where(p => p.Record == null).GroupBy(p => p.Map).ToDictionary(g => g.Key,
+                g => g.Select(p => p.Script).ToHashSet(StringComparer.OrdinalIgnoreCase));
+            var launches = maps.SelectMany(map => map.Calls.Where(c => scripts.TryGetValue(map.Path, out var names) && names.Contains(c.To))
+                .Select(call => (Map: map, Call: call))).ToArray();
+            if (starts.Length > 0 || launches.Length > 0) AtlasNodes.Children.Add(AtlasLazy("Запуски этапов и дочерние Script", () =>
             {
                 var panel = new StackPanel();
-                foreach (var point in route.Points.Where(p => p.CallTarget != null)) panel.Children.Add(AtlasPointEntry(point, maps, snapshot, route));
-                foreach (var map in maps)
-                foreach (var script in route.Points.Where(p => p.Map == map.Path && p.Record == null).Select(p => p.Script).Distinct(StringComparer.OrdinalIgnoreCase))
+                foreach (var point in starts) panel.Children.Add(AtlasPointEntry(point, maps, snapshot, route));
+                foreach (var (map, call) in launches)
                 {
-                    foreach (var call in map.Calls.Where(c => c.To.Equals(script, StringComparison.OrdinalIgnoreCase)))
-                        panel.Children.Add(AtlasLink(new(map.Path + "@launch" + call.Offset, quest, "", "", map.Path, map.Hash, call.From, call.Offset, call.Line, "", "", false),
-                            Path.GetFileName(map.Path) + " · " + call.From + ":" + call.Line + " → " + script + " · прямой вызов, выполнение не доказано"));
-                    if (!map.Calls.Any(c => c.To.Equals(script, StringComparison.OrdinalIgnoreCase)) && !script.Equals("WorldScript", StringComparison.OrdinalIgnoreCase))
-                        panel.Children.Add(AtlasNote(Path.GetFileName(map.Path) + " · " + script + ": источник запуска не найден; возможное внешнее событие неизвестно.", true));
+                    panel.Children.Add(AtlasLink(new(map.Path + "@launch" + call.Offset, quest, "", "", map.Path, map.Hash, call.From, call.Offset, call.Line, "", "", false),
+                        Path.GetFileName(map.Path) + " · " + call.From + ":" + call.Line + " → " + call.To + " · прямой вызов, выполнение не доказано"));
                 }
                 return panel;
             }));

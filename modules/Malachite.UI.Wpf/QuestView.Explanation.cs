@@ -36,6 +36,28 @@ public partial class QuestView
         return new TextBox { Text = text, IsReadOnly = true, AcceptsReturn = true, FontFamily = new FontFamily("Consolas"),
             TextWrapping = TextWrapping.Wrap, MaxHeight = 220, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     }
+    static FrameworkElement ScenarioView(IEnumerable<ScenarioLine> lines)
+    {
+        var panel = new StackPanel();
+        foreach (var line in lines)
+        {
+            if (line.Kind == "separator")
+            {
+                panel.Children.Add(new Border { BorderBrush = MalachiteTheme.Border, BorderThickness = new(0, 0, 0, 1), Margin = new(0, 9, 0, 9) });
+                continue;
+            }
+            bool heading = line.Kind == "heading", note = line.Kind == "note";
+            panel.Children.Add(new TextBlock
+            {
+                Text = (heading || note ? "" : "• ") + line.Text, ToolTip = line.Tooltip.Length == 0 ? null : line.Tooltip,
+                TextWrapping = TextWrapping.Wrap, FontSize = note ? 12 : 14, LineHeight = note ? 18 : 22,
+                FontWeight = heading ? FontWeights.SemiBold : FontWeights.Normal,
+                Foreground = note ? MalachiteTheme.Muted : heading ? MalachiteTheme.Accent : MalachiteTheme.Text,
+                Margin = new(line.Indent * 16 + (heading ? 0 : 12), heading ? 7 : 0, 0, note ? 5 : 3)
+            });
+        }
+        return panel;
+    }
     void ExplainAt(int offset)
     {
         if (ExplanationContent == null || Current == null || internalUpdate || cardDirty) return;
@@ -65,11 +87,10 @@ public partial class QuestView
         var call = position.Call;
         explanationOffset = call?.Start ?? position.Start;
         string title = call?.Name ?? position.Construction?.Kind ?? "Строка " + position.Line;
-        string description;
+        string description = index.LineDescription(position, CurrentExplanation());
         HoverHelp? help = null;
         if (call != null)
         {
-            description = CurrentExplanation().Explain(call, position.Condition);
             help = EnrichDatabaseHelp(Current, call.Start, Current.Declarations.ContainsKey(call.Name)
                 ? Help.Symbol(Current, call.Name, Current, call.Start) : Help.Command(call.Name, Current, call));
         }
@@ -82,27 +103,24 @@ public partial class QuestView
             {
                 title = construction?.Kind ?? word;
                 help = Help.Symbol(Current, title);
-                description = help?.Body ?? "Объяснение пока недоступно";
-                if (construction?.Name != null) description += "\nОбъявлен Script «" + construction.Name + "».";
             }
-            else description = "Объяснение пока недоступно";
         }
         InspectorTitle.Text = title; InspectorTitle.ToolTip = null;
         InspectorHint.Text = "Строка " + position.Line + (position.Block == null ? " · вне Script" : " · " + position.Block.Display);
-        panel.Children.Add(Note(description));
-        AddAtlasContext(panel, position);
+        var sentence = Note(description);
+        sentence.ToolTip = call == null ? null : CurrentExplanation().Tooltip(call, position.Condition);
+        panel.Children.Add(sentence);
         if (position.Block is { } block)
         {
-            string summary = position.Rule == null ? index.StageSummary(block, CurrentExplanation()) : index.RuleSummary(position.Rule, CurrentExplanation());
+            var summary = position.Rule == null ? index.StageLines(block, CurrentExplanation()) : index.RuleLines(position.Rule, CurrentExplanation());
             panel.Children.Add(new TextBlock { Text = "ЭТАП · " + block.Display, Foreground = MalachiteTheme.Accent, Margin = new Thickness(0, 10, 0, 8) });
-            panel.Children.Add(Note(summary));
-            panel.Children.Add(new TextBlock { Text = "По исходному коду, не по состоянию игры. Соседние ЕСЛИ — независимые проверки.",
-                TextWrapping = TextWrapping.Wrap, Foreground = MalachiteTheme.Muted, Margin = new Thickness(0, 0, 0, 8) });
+            panel.Children.Add(ScenarioView(summary));
         }
+        AddAtlasContext(panel, position);
         int sourceStart = call?.Start ?? position.Start, sourceEnd = call?.End ?? position.End;
         panel.Children.Add(new Expander { Header = "Исходный код · строка " + position.Line,
             Content = ExplanationSource(sourceStart, sourceEnd), Foreground = MalachiteTheme.Muted,
-            IsExpanded = description.StartsWith("Объяснение пока недоступно", StringComparison.Ordinal) });
+            IsExpanded = description.StartsWith("не объяснено:", StringComparison.Ordinal) });
         if (help != null) panel.Children.Add(new Expander { Header = "Справка и данные БД", Content = HelpView(help), Foreground = MalachiteTheme.Muted });
         ExplanationContent.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, MaxHeight = 480 };

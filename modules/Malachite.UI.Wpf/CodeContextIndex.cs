@@ -1,5 +1,7 @@
 namespace QuestStudio;
 
+internal sealed record ScenarioLine(string Text, string Tooltip = "", string Kind = "item", int Indent = 0);
+
 // Source positions are indexed once per Analysis. Caret movement never reparses text.
 internal sealed class CodeContextIndex
 {
@@ -41,8 +43,8 @@ internal sealed class CodeContextIndex
     readonly Regions<Rule> rules;
     readonly Dictionary<int, Call> callsByStart;
     readonly Dictionary<string, ScriptBlock> definitions;
-    readonly Dictionary<int, string> ruleSummaries = [];
-    readonly Dictionary<int, string> stageSummaries = [];
+    readonly Dictionary<int, ScenarioLine[]> ruleSummaries = [];
+    readonly Dictionary<int, ScenarioLine[]> stageSummaries = [];
     readonly List<Rule> allRules = [];
 
     public CodeContextIndex(Analysis analysis)
@@ -105,54 +107,93 @@ internal sealed class CodeContextIndex
         return new(line + 1, start, end, calls.At(focus, start), block, declaration, rule,
             rule != null && focus >= rule.Conditions.Start && focus <= rule.Conditions.End);
     }
-    string Summary(Range range, bool condition, ScenarioExplanation explanation)
+    ScenarioLine[] Summary(Range range, bool condition, ScenarioExplanation explanation, int indent = 0)
     {
-        int token = TokenAtOrAfter(range.Start), count = 0;
-        var parts = new List<string>();
-        while (token < analysis.Tokens.Count && analysis.Tokens[token].Start < range.End && count < 6)
+        int token = TokenAtOrAfter(range.Start);
+        var parts = new List<ScenarioLine>();
+        var notes = new List<ScenarioLine>();
+        while (token < analysis.Tokens.Count && analysis.Tokens[token].Start < range.End)
         {
-            if (!callsByStart.TryGetValue(analysis.Tokens[token].Start, out var call) || call.End > range.End)
-            { parts.Add("Объяснение пока недоступно / вложенная структура — смотрите код"); break; }
-            string text = explanation.Brief(call, condition).Replace('\n', ' ');
-            parts.Add(text.Length > 240 ? text[..240] + "…" : text);
-            count++; token = TokenAtOrAfter(call.End);
+            int start = analysis.Tokens[token].Start;
+            var nested = allRules.FirstOrDefault(r => r.Start == start && r.End <= range.End);
+            if (nested != null)
+            {
+                parts.AddRange(RuleLines(nested, explanation).Select(line => line with { Indent = line.Indent + indent + 1 }));
+                token = TokenAtOrAfter(nested.End); continue;
+            }
+            if (callsByStart.TryGetValue(start, out var call) && call.End <= range.End)
+            {
+                bool kill = !condition && call.Name.Equals("KillScript", StringComparison.OrdinalIgnoreCase);
+                var line = new ScenarioLine(explanation.Explain(call, condition), explanation.Tooltip(call, condition), kill ? "note" : "item", indent);
+                (kill ? notes : parts).Add(line);
+                token = TokenAtOrAfter(call.End); continue;
+            }
+            int first = token++;
+            while (token < analysis.Tokens.Count && analysis.Tokens[token].Start < range.End && analysis.Tokens[token].Line == analysis.Tokens[first].Line) token++;
+            string raw = analysis.Text[start..analysis.Tokens[token - 1].End];
+            parts.Add(new("не объяснено: " + raw, raw, "item", indent));
         }
-        if (count == 6 && token < analysis.Tokens.Count && analysis.Tokens[token].Start < range.End) parts.Add("… продолжение в коде");
-        return parts.Count == 0 ? condition ? "без условий" : "нет действий" : string.Join("; ", parts);
+        parts.AddRange(notes);
+        if (parts.Count == 0) parts.Add(new(condition ? "без условий" : "нет действий", Kind: "note", Indent: indent));
+        return parts.ToArray();
     }
-    public string RuleSummary(Rule rule, ScenarioExplanation explanation)
+    public ScenarioLine[] RuleLines(Rule rule, ScenarioExplanation explanation)
     {
         if (!ruleSummaries.TryGetValue(rule.Start, out var summary))
         {
-            summary = "Ожидать одновременно: " + Summary(rule.Conditions, true, explanation) +
-                "\n→ После выполнения · по порядку: " + Summary(rule.Actions, false, explanation);
-            if (rule.ElseActions != null) summary += "\n→ Иначе: " + Summary(rule.ElseActions, false, explanation) +
-                "\nПри достижении проверки выбирается одна ветка.";
+            var rows = new List<ScenarioLine> { new("Когда", "Все перечисленные условия должны выполняться одновременно.", "heading") };
+            rows.AddRange(Summary(rule.Conditions, true, explanation));
+            rows.Add(new("Тогда", "Действия идут в порядке исходного кода. KillScript показан примечанием в конце; уже начатые действия продолжаются.", "heading"));
+            rows.AddRange(Summary(rule.Actions, false, explanation));
+            if (rule.ElseActions != null)
+            {
+                rows.Add(new("Иначе", "Если эта проверка достигнута, но условия не выполнены, выбирается эта ветка.", "heading"));
+                rows.AddRange(Summary(rule.ElseActions, false, explanation));
+            }
+            summary = rows.ToArray();
             ruleSummaries[rule.Start] = summary;
         }
         return summary;
     }
-    public string StageSummary(ScriptBlock block, ScenarioExplanation explanation)
+    public ScenarioLine[] StageLines(ScriptBlock block, ScenarioExplanation explanation)
     {
         if (!stageSummaries.TryGetValue(block.Start, out var summary))
         {
-            var stages = new List<string>();
+            var stages = new List<ScenarioLine>();
             int token = TokenAtOrAfter(block.Body.Start);
             while (token < analysis.Tokens.Count && analysis.Tokens[token].Start < block.Body.End)
             {
-                if (stages.Count == 4) { stages.Add("Продолжение этапа — в коде."); break; }
                 int offset = analysis.Tokens[token].Start;
                 var rule = allRules.FirstOrDefault(r => r.Start == offset);
                 if (rule != null)
-                { stages.Add(RuleSummary(rule, explanation)); token = TokenAtOrAfter(rule.End); }
-                else if (callsByStart.TryGetValue(offset, out var call))
-                { stages.Add(explanation.Brief(call)); token = TokenAtOrAfter(call.End); }
-                else { stages.Add("Объяснение пока недоступно / вложенная структура — смотрите код"); break; }
+                {
+                    if (stages.Count > 0) stages.Add(new("", Kind: "separator"));
+                    stages.AddRange(RuleLines(rule, explanation)); token = TokenAtOrAfter(rule.End);
+                }
+                else
+                {
+                    int end = allRules.Where(r => r.Start > offset && r.Start < block.Body.End).Select(r => r.Start).DefaultIfEmpty(block.Body.End).Min();
+                    if (stages.Count > 0) stages.Add(new("", Kind: "separator"));
+                    stages.Add(new(block.World ? "При запуске карты" : "Тогда", Kind: "heading"));
+                    stages.AddRange(Summary(new(offset, end - offset), false, explanation)); token = TokenAtOrAfter(end);
+                }
             }
-            summary = block.World ? "При запуске карты · по порядку: " + Summary(block.Body, false, explanation) :
-                stages.Count == 0 ? "В этом этапе нет действий." : string.Join("\n\n", stages);
+            summary = stages.Count == 0 ? [new("В этом этапе нет действий.", Kind: "note")] : stages.ToArray();
             stageSummaries[block.Start] = summary;
         }
         return summary;
     }
+    public string LineDescription(Position position, ScenarioExplanation explanation) => position.Call is { } call ? explanation.Explain(call, position.Condition) :
+        position.Construction?.Kind.ToLowerInvariant() switch
+        {
+            "declarescript" => "объявление этапа " + position.Construction?.Name,
+            "globalvars" => "переменные карты",
+            _ => position.Rule != null ? analysis.Text[position.Start..position.End].Trim().ToLowerInvariant() switch
+            { "then" => "действия при выполнении условий", "else" => "действия, если условия не выполнены", _ => "условия и действия этапа" } :
+                position.Block is { } block ? block.World ? "при запуске карты" : "этап " + block.Name : "не объяснено: " + analysis.Text[position.Start..position.End].Trim()
+        };
+    public static string PlainText(IEnumerable<ScenarioLine> lines) => string.Join("\n", lines.Select(line => line.Kind == "separator" ? "" :
+        new string(' ', line.Indent * 2) + (line.Kind == "heading" ? "" : line.Kind == "note" ? "  " : "  • ") + line.Text));
+    public string RuleSummary(Rule rule, ScenarioExplanation explanation) => PlainText(RuleLines(rule, explanation));
+    public string StageSummary(ScriptBlock block, ScenarioExplanation explanation) => PlainText(StageLines(block, explanation));
 }

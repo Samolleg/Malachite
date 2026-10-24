@@ -48,10 +48,10 @@ public partial class QuestView
     void AddAtlasGroup(string title, IEnumerable<QuestPoint> points, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
     {
         var rows = points.OrderBy(p => p.Record == null).ThenBy(p => p.Map).ThenBy(p => p.Line).ToArray();
+        if (rows.Length == 0) return;
         AtlasNodes.Children.Add(AtlasLazy(title + " · " + rows.Length, () =>
         {
             var panel = new StackPanel();
-            if (rows.Length == 0) panel.Children.Add(AtlasNote("В просмотренных источниках не найдено; это пробел, а не доказательство отсутствия.", true));
             foreach (var part in rows.GroupBy(p => p.Record != null ? "Действия БД" : p.Key.StartsWith("b.", StringComparison.Ordinal) ? "Состояние брифинга" : QuestAtlas.Part(p.Key)))
                 panel.Children.Add(AtlasLazy(part.Key + " · " + part.Count(), () =>
                 {
@@ -62,12 +62,15 @@ public partial class QuestView
             return panel;
         }));
     }
-    FrameworkElement AtlasPointEntry(QuestPoint point, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route) =>
-        AtlasLazyAsync(Path.GetFileName(point.Map) + " · " + point.Script + (point.Line > 0 ? " · строка " + point.Line : "") + " · " + point.Key,
-            () => AtlasPointViewAsync(point, maps, snapshot, route));
+    FrameworkElement AtlasPointEntry(QuestPoint point, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
+    {
+        var entry = AtlasLazyAsync(ScenarioExplanation.PointTitle(point), () => AtlasPointViewAsync(point, maps, snapshot, route));
+        entry.ToolTip = point.Key + (point.Context == "0" ? "" : " · для игрока " + point.Context);
+        return entry;
+    }
     async Task<FrameworkElement> AtlasPointViewAsync(QuestPoint point, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
     {
-        var panel = new StackPanel(); panel.Children.Add(AtlasLink(point));
+        var panel = new StackPanel();
         if (point.Record != null)
         {
             panel.Children.Add(AtlasNote(point.Action + "\n" + point.Key + "\n" + point.Conditions));
@@ -94,20 +97,20 @@ public partial class QuestView
                 {
                     var call = context.Analysis.Calls.FirstOrDefault(c => c.Start == point.Offset);
                     return (Explanation: call == null ? point.Action : context.Explanation.Explain(call, position.Condition),
-                        Summary: position.Block == null ? "" : position.Rule == null ? context.Index.StageSummary(position.Block, context.Explanation) : context.Index.RuleSummary(position.Rule, context.Explanation));
+                        Tooltip: call == null ? point.Key : context.Explanation.Tooltip(call, position.Condition),
+                        Summary: position.Block == null ? [] : position.Rule == null ? context.Index.StageLines(position.Block, context.Explanation) : context.Index.RuleLines(position.Rule, context.Explanation));
                 }
             });
-            panel.Children.Add(AtlasNote(text.Explanation));
             if (position.Block != null)
             {
-                panel.Children.Add(AtlasNote(text.Summary, true));
-                panel.Children.Add(AtlasChildren(map, position.Block.Name, snapshot, new(StringComparer.OrdinalIgnoreCase)));
-                if (!map.Calls.Any(c => c.To.Equals(position.Block.Name, StringComparison.OrdinalIgnoreCase)) && !position.Block.World)
-                    panel.Children.Add(AtlasNote("Входящий запуск этого Script не найден. Внешнее событие / достижимость неизвестны.", true));
+                panel.Children.Add(ScenarioView(text.Summary));
+                if (map.Calls.Any(c => c.From.Equals(position.Block.Name, StringComparison.OrdinalIgnoreCase)))
+                    panel.Children.Add(AtlasChildren(map, position.Block.Name, snapshot, new(StringComparer.OrdinalIgnoreCase)));
             }
+            else { var sentence = AtlasNote(text.Explanation); sentence.ToolTip = text.Tooltip; panel.Children.Add(sentence); }
             // Other independent checks in the same Script can finish a neighbouring quest.
             var nearby = map.Points.Where(p => p.Script.Equals(point.Script, StringComparison.OrdinalIgnoreCase) && p.Id != point.Id && p.Key == point.Key).ToArray();
-            if (nearby.Length > 0) panel.Children.Add(AtlasLazy("Другие обращения этого Script · условия независимы", () =>
+            if (nearby.Length > 0) panel.Children.Add(AtlasLazy("Другие обращения этого Script", () =>
             {
                 var other = new StackPanel();
                 foreach (var use in nearby)
@@ -115,24 +118,26 @@ public partial class QuestView
                     other.Children.Add(AtlasLazyAsync("Строка " + use.Line + " · " + use.Script, async () =>
                     {
                         var detail = new StackPanel(); detail.Children.Add(AtlasLink(use));
-                        string description = await Task.Run(() =>
+                        var description = await Task.Run(() =>
                         {
                             lock (context)
                             {
                                 var usePosition = context.Index.At(use.Offset);
                                 var useCall = context.Analysis.Calls.FirstOrDefault(c => c.Start == use.Offset);
-                                return (useCall == null ? use.Action : context.Explanation.Explain(useCall, usePosition.Condition)) +
-                                    (usePosition.Rule == null ? "" : "\n" + context.Index.RuleSummary(usePosition.Rule, context.Explanation));
+                                return usePosition.Rule == null
+                                    ? new[] { new ScenarioLine(useCall == null ? use.Action : context.Explanation.Explain(useCall, usePosition.Condition),
+                                        useCall == null ? use.Key : context.Explanation.Tooltip(useCall, usePosition.Condition)) }
+                                    : context.Index.RuleLines(usePosition.Rule, context.Explanation);
                             }
                         });
-                        detail.Children.Add(AtlasNote(description)); return detail;
+                        detail.Children.Add(ScenarioView(description)); return detail;
                     }));
                 }
                 return other;
             }));
         }
         else panel.Children.Add(AtlasNote(point.Action + "\nТекст старого индекса недоступен: обновите папку MOB.", true));
-        if (point.Key.Length > 0) panel.Children.Add(AtlasNote("Ключ " + point.Key + " · контекст " + point.Context, true));
+        panel.Children.Add(AtlasLink(point, point.Record == null ? "Открыть в коде" : "Открыть в БД"));
         foreach (var edge in route.Connections.Where(e => !e.Certain && (e.From == point.Id || e.To == point.Id)))
         {
             var other = route.Points.First(p => p.Id == (edge.From == point.Id ? edge.To : edge.From));
@@ -143,10 +148,10 @@ public partial class QuestView
     void AddAtlasDependencies(string quest, QuestMap[] maps, WorkspaceSnapshot snapshot, QuestRoute route)
     {
         var links = maps.SelectMany(m => m.Dependencies).Where(d => d.Check.Quest == quest || d.Action.Quest == quest).ToArray();
+        if (links.Length == 0) return;
         AtlasNodes.Children.Add(AtlasLazy("Зависимости по условиям и действиям · " + links.Length, () =>
         {
             var panel = new StackPanel();
-            if (links.Length == 0) panel.Children.Add(AtlasNote("Доказанные связи не найдены в просмотренных источниках.", true));
             foreach (var group in links.GroupBy(d => (Incoming: d.Action.Quest == quest, Other: d.Action.Quest == quest ? d.Check.Quest : d.Action.Quest)))
             {
                 panel.Children.Add(AtlasLazy((group.Key.Incoming ? "Зависит от: " : "Влияет на: ") + AtlasQuestTitle(group.Key.Other, snapshot) + " · " + group.Key.Other, () =>
@@ -184,12 +189,12 @@ public partial class QuestView
                 var block = context.Analysis.Blocks.FirstOrDefault(b => b.Name.Equals(link.To, StringComparison.OrdinalIgnoreCase));
                 if (block != null) panel.Children.Add(AtlasLazyAsync("Объяснение этапа · " + block.Name, async () =>
                 {
-                    string summary = await Task.Run(() => { lock (context) return context.Index.StageSummary(block, context.Explanation); });
-                    return AtlasNote(summary);
+                    ScenarioLine[] lines = await Task.Run(() => { lock (context) return context.Index.StageLines(block, context.Explanation); });
+                    return ScenarioView(lines);
                 }));
-                panel.Children.Add(AtlasChildren(map, link.To, snapshot, next));
+                if (map.Calls.Any(c => c.From.Equals(link.To, StringComparison.OrdinalIgnoreCase)))
+                    panel.Children.Add(AtlasChildren(map, link.To, snapshot, next));
             }
-            if (panel.Children.Count == 0) panel.Children.Add(AtlasNote("Прямых вызовов дочерних Script не найдено; внешние события не определены.", true));
             return panel;
         });
     }
