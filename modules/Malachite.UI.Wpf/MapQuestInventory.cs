@@ -3,10 +3,17 @@ using DatabaseEditor.Modules.V1;
 
 namespace QuestStudio;
 
+public sealed record MapQuestEvidence(string Operation, int Line);
+
 public sealed record MapQuestItem(string Key, string Title, int Category, string Reason, string Proof)
 {
+    // Display grouping must not replace the full roots used by the atlas.
+    public string[] Keys { get; init; } = [Key];
+    public string? DisplayKey { get; init; } = Key;
+    public MapQuestEvidence[] Evidence { get; init; } = [];
     public string Group => Category == 0 ? "Квесты этой карты" : "Через брифинги";
-    public override string ToString() => Title + " · " + Key + " · " + Reason;
+    public override string ToString() => Title + (DisplayKey == null ? "" : " · " + DisplayKey) + " · " + Reason +
+        (Keys.Length > 1 ? " · " + Keys.Length + " ключей" : "");
 }
 
 // Shared by the picker and the delivery extract; no cross-map index or explanations on the UI thread.
@@ -17,7 +24,7 @@ public static class MapQuestInventory
         var record = QuestAtlas.QuestRecord(quest, snapshot);
         if (record == null) return "Состояние без подтверждённого квеста БД";
         var texts = record.Texts.Where(t => t.ResourceKey.Equals("quest " + record.Name, StringComparison.Ordinal)).ToArray();
-        return texts.Length == 1 ? texts[0].Title : quest + " · текст QUEST отсутствует или неоднозначен";
+        return texts.Length == 1 && !string.IsNullOrWhiteSpace(texts[0].Title) ? texts[0].Title : record.Name + " (нет названия в texts.res)";
     }
 
     public static MapQuestItem[] Read(Analysis analysis, WorkspaceSnapshot snapshot, string path, bool includeBriefings)
@@ -42,20 +49,26 @@ public static class MapQuestInventory
             var reads = group.Where(p => p.Call.Name.Equals("GSGetVar", StringComparison.OrdinalIgnoreCase)).ToArray();
             if (writes.Length == 0 && completion.Length == 0 && reads.Length == 0) continue;
             bool local = writes.Length > 0 || completion.Length > 0;
-            // One short proof in the picker; every occurrence remains in Proof and the overview.
+            // Root issuance/completion are both relevant; subparts keep their short fallback.
             var primary = writes.FirstOrDefault(p => p.Key == group.Key);
             if (primary.Call == null) primary = writes.FirstOrDefault();
-            string reason = primary.Call != null ? WriteReason(primary.Key!, QuestPredicate.Number(analysis.Slice(primary.Call.Arguments[2]))!.Value) + " стр. " + primary.Call.Line :
-                completion.Length > 0 ? "завершается (QuestComplete) стр. " + completion[0].Call.Line : ReadReason(analysis, reads[0].Call);
+            var rootEvents = writes.Where(p => p.Key == group.Key && QuestPredicate.Number(analysis.Slice(p.Call.Arguments[2])) is 1 or 2).ToArray();
+            var evidence = (rootEvents.Length > 0 ? rootEvents : primary.Call != null ? [primary] : writes)
+                .Select(p => new MapQuestEvidence(WriteReason(p.Key!, QuestPredicate.Number(analysis.Slice(p.Call.Arguments[2]))!.Value), p.Call.Line))
+                .Concat(completion.Select(p => new MapQuestEvidence("завершается", p.Call.Line))).ToArray();
+            string reason = local ? EvidenceReason(evidence) : ReadReason(analysis, reads[0].Call);
             items.Add(new(group.Key, Title(group.Key, snapshot), local ? 0 : 1, reason,
-                string.Join("\n", group.Select(p => Proof(p.Call, p.Key!)).Concat(completion.Select(p => Proof(p.Call, p.Name!))))));
+                string.Join("\n", group.Select(p => Proof(p.Call, p.Key!)).Concat(completion.Select(p => Proof(p.Call, p.Name!))))) { Evidence = evidence });
         }
         // QuestComplete names a DB record, not a short GS alias. Keep that explicit identity
         // if no matching full root is present on this map (never invent a zone suffix).
         foreach (var group in completed.GroupBy(p => p.Name!, StringComparer.Ordinal))
             if (!items.Any(q => q.Category == 0 && QuestAtlas.QuestRecord(q.Key, snapshot)?.Name == group.Key))
-                items.Add(new(group.Key, Title(group.Key, snapshot), 0, "завершается (QuestComplete) стр. " + group.First().Call.Line,
-                    string.Join("\n", group.Select(p => Proof(p.Call, p.Name!)))));
+            {
+                var evidence = group.Select(p => new MapQuestEvidence("завершается", p.Call.Line)).ToArray();
+                items.Add(new(group.Key, Title(group.Key, snapshot), 0, EvidenceReason(evidence),
+                    string.Join("\n", group.Select(p => Proof(p.Call, p.Name!)))) { Evidence = evidence });
+            }
         if (includeBriefings)
         {
             var briefings = analysis.Calls.Where(c => QuestStateReference.Supports(c.Name))
@@ -72,9 +85,43 @@ public static class MapQuestInventory
                         string.Join("\n", calls.Select(c => Proof(c, QuestAtlas.Literal(analysis, c, 1)!)))));
                 }
         }
-        return items.GroupBy(q => (q.Key, q.Category)).Select(g => g.First() with
+        var unique = items.GroupBy(q => (q.Key, q.Category)).Select(g => g.First() with
             { Reason = string.Join("; ", g.Select(q => q.Reason).Distinct()), Proof = string.Join("\n", g.Select(q => q.Proof).Distinct()) })
+            .ToArray();
+        return unique.Where(q => q.Category != 2)
+            .GroupBy(q => (Record: QuestAtlas.QuestRecord(q.Key, snapshot)!.Reference, q.Category))
+            .Select(g =>
+            {
+                var first = g.First();
+                var record = QuestAtlas.QuestRecord(first.Key, snapshot)!;
+                var evidence = g.SelectMany(q => q.Evidence).Distinct().ToArray();
+                return first with
+                {
+                    Keys = g.Select(q => q.Key).ToArray(),
+                    DisplayKey = first.Title == record.Name + " (нет названия в texts.res)" ? null : g.Count() > 1 ? record.Name : first.Key,
+                    Reason = evidence.Length > 0 ? EvidenceReason(evidence) : string.Join(" · ", g.Select(q => q.Reason).Distinct()),
+                    Evidence = evidence,
+                    Proof = string.Join("\n", g.Select(q => q.Proof).Distinct())
+                };
+            }).Concat(unique.Where(q => q.Category == 2))
             .OrderBy(q => q.Category).ThenBy(q => q.Title).ThenBy(q => q.Key).ToArray();
+    }
+
+    static string EvidenceReason(IEnumerable<MapQuestEvidence> evidence) => string.Join(" · ", evidence.GroupBy(e => e.Operation)
+        .OrderBy(g => g.Key == "выдаётся" ? 0 : g.Key == "завершается" ? 1 : 2)
+        .Select(g => g.Key + " стр. " + LineRanges(g.Select(e => e.Line))));
+
+    static string LineRanges(IEnumerable<int> lines)
+    {
+        var sorted = lines.Distinct().Order().ToArray();
+        var ranges = new List<string>();
+        for (int i = 0; i < sorted.Length; i++)
+        {
+            int start = sorted[i];
+            while (i + 1 < sorted.Length && sorted[i + 1] == sorted[i] + 1) i++;
+            ranges.Add(start == sorted[i] ? start.ToString() : start + "–" + sorted[i]);
+        }
+        return string.Join(", ", ranges);
     }
 
     static string WriteReason(string key, double value)
