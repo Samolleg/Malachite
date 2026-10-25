@@ -105,8 +105,8 @@ public partial class QuestView
     {
         atlasQuest = point.Quest.Length > 0 ? point.Quest : "@GS:" + point.Key;
         QuestOverview.Visibility = Visibility.Visible;
-        QuestOverview.IsExpanded = true;
-        RefreshQuestAtlas();
+        if (QuestOverview.IsExpanded) RefreshQuestAtlas();
+        else QuestOverview.IsExpanded = true;
     }
     async void AddAtlasContext(StackPanel panel, CodeContextIndex.Position position)
     {

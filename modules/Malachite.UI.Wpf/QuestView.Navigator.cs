@@ -145,7 +145,20 @@ public partial class QuestView
     {
         InspectorTitle.Text = MapQuestInventory.Title(quest, Host.Workspace.Snapshot());
         InspectorHint.Text = quest;
-        ExplanationContent.Content = AtlasNote(MapNavigator.QuestText(quest, Host.Workspace.Snapshot()));
+        var panel = new StackPanel();
+        panel.Children.Add(AtlasNote(MapNavigator.QuestText(quest, Host.Workspace.Snapshot())));
+        var item = navigatorData?.Quests.FirstOrDefault(q => q.Item.Keys.Contains(quest, StringComparer.Ordinal));
+        if (item?.Item.Keys.Length > 1)
+        {
+            panel.Children.Add(AtlasNote("Ключи одной записи БД. Выберите корень для отдельного обзора связей:", true));
+            foreach (string key in item.Item.Keys)
+            {
+                var button = new Button { Content = key, HorizontalContentAlignment = HorizontalAlignment.Left, Margin = new(0, 3, 0, 0) };
+                button.Click += (_, _) => ShowNavigatorQuest(key);
+                panel.Children.Add(button);
+            }
+        }
+        ExplanationContent.Content = panel;
         ExplanationContent.Visibility = Visibility.Visible; HelpPanel.Visibility = Visibility.Collapsed;
         explainedAnalysis = null; atlasQuest = quest;
         QuestOverview.Visibility = Visibility.Visible;
@@ -163,8 +176,8 @@ public partial class QuestView
     void AddNavigatorQuestText(StackPanel panel, CodeContextIndex.Position position)
     {
         var snapshot = Host.Workspace.Snapshot();
-        var calls = position.Block?.Calls.Where(c => c.Start >= (position.Rule?.Start ?? position.Start) &&
-            c.Start < (position.Rule?.End ?? position.End)) ?? [];
+        var calls = position.Block?.Calls.Where(c => c.Start >= (position.Rule?.Start ?? position.Block.Start) &&
+            c.Start < (position.Rule?.End ?? position.Block.End)) ?? [];
         var keys = calls.Select(c => QuestStateReference.Supports(c.Name) ? QuestAtlas.QuestRoot(QuestAtlas.Literal(Current, c, 1) ?? "") :
                 c.Name.Equals("QuestComplete", StringComparison.OrdinalIgnoreCase) ? QuestAtlas.Literal(Current, c, 1) : null)
             .Where(k => k != null).Cast<string>().Distinct(StringComparer.Ordinal).ToArray();
