@@ -23,7 +23,7 @@ public partial class QuestView
         SetStatus(message); Host.Report(message);
         return report.Complete && !HasPendingChanges;
     }
-    public void Stop() { if (stopped) return; stopped = true; CancelWorkbenchSearch(); QuestAtlasPanel.LayoutUpdated -= Atlas_LayoutUpdated; StopCompletion(); debounce.Stop(); CancelFolderIndex(); foreach (var hover in hovers) hover.Dispose(); DetachDocumentHost(); }
+    public void Stop() { if (stopped) return; stopped = true; QuestAtlasPanel.LayoutUpdated -= Atlas_LayoutUpdated; StopCompletion(); debounce.Stop(); CancelFolderIndex(); foreach (var hover in hovers) hover.Dispose(); DetachDocumentHost(); }
     public bool RunCommand(ModuleCommand command)
     {
         if (stopped) return false;
@@ -80,7 +80,7 @@ public partial class QuestView
             ? new Workspace { Name = Workspace.Name, SourcePath = Workspace.SourcePath, Text = "", TextEncoding = Workspace.TextEncoding, TextPreamble = Workspace.TextPreamble }.SaveProject()
             : Workspace.SaveProject();
         return JsonSerializer.SerializeToUtf8Bytes(new RecoveryState(source == null ? 2 : 3, project, source == null && !plainTransaction ? CodeEditor.Text : "",
-            cardDirty, ConditionBox.Text, ActionBox.Text, ElseBox.Text, Selected?.Name, savedText, UseElse.IsChecked == true, CodeEditor.CaretIndex, documentId, saveArtifactKind, includeAtlas
+            cardDirty, legacyCard?.Conditions ?? "", legacyCard?.Actions ?? "", legacyCard?.Otherwise ?? "", legacyCard?.SelectedName ?? Selected?.Name, savedText, legacyCard?.UseElse == true, CodeEditor.CaretIndex, documentId, saveArtifactKind, includeAtlas
                 ? new AtlasRecovery(indexedMaps.ToArray(), folderFiles.ToArray(), atlasIndexErrors.ToArray(),
                     false, AtlasIndirect.IsChecked == true, atlasQuest, QuestAtlasPanel.Visibility == System.Windows.Visibility.Visible)
                 : null, source, documentOpen, HomePanel.Visibility == System.Windows.Visibility.Visible,
@@ -107,7 +107,7 @@ public partial class QuestView
                 suppressPublish = true;
                 try { LoadWorkspace(new Workspace { Name = "", Text = "" }, false); }
                 finally { suppressPublish = false; }
-                documentOpen = false; ShowHome(true); EncodingText.Text = ""; SetStatus("Выберите карту, откройте файл или создайте новую цепочку."); RestoreAtlas(r.Atlas);
+                documentOpen = false; ShowHome(true); EncodingText.Text = ""; SetStatus("Выберите карту или откройте файл."); RestoreAtlas(r.Atlas);
                 return Result.Ok;
             }
             if (documentHost != null && r.DocumentId is { } recoveredId && documentHost.Documents.Get(recoveredId) is { } existing)
@@ -171,13 +171,8 @@ public partial class QuestView
             saveArtifactKind = r.SaveArtifactKind;
             Selected = Current.Blocks.FirstOrDefault(b => b.Name == r.SelectedName);
             if (Selected != null) FillCard(Selected);
-            if (r.CardDirty)
-            {
-                internalUpdate = true;
-                ConditionBox.Text = r.Conditions; ActionBox.Text = r.Actions; ElseBox.Text = r.Otherwise;
-                UseElse.IsChecked = r.UseElse; ElseBox.IsEnabled = r.UseElse;
-                internalUpdate = false; cardDirty = true; CodeEditor.IsReadOnly = true;
-            }
+            legacyCard = r.CardDirty ? r : null;
+            CodeEditor.IsReadOnly = cardDirty;
             CodeEditor.CaretIndex = Math.Clamp(r.Caret, 0, CodeEditor.Text.Length);
             dirty = cardDirty || CodeEditor.Text != savedText;
             } finally { internalUpdate = false; suppressPublish = false; }

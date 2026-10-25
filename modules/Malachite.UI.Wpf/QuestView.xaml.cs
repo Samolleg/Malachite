@@ -23,7 +23,9 @@ public partial class QuestView : UserControl
     public ScriptBlock? Selected { get; private set; }
     readonly DispatcherTimer debounce = new() { Interval = TimeSpan.FromMilliseconds(650) };
     readonly List<string> folderFiles = [];
-    bool internalUpdate, dirty, cardDirty, navigating;
+    bool internalUpdate, dirty, navigating;
+    RecoveryState? legacyCard;
+    bool cardDirty => legacyCard?.CardDirty == true;
     SyntaxLayer? syntax;
     readonly List<HoverController> hovers = [];
     readonly List<IndexedMap> indexedMaps = [];
@@ -55,11 +57,11 @@ public partial class QuestView : UserControl
         InitializeComponent();
         debounce.Tick += (_, _) => { debounce.Stop(); RefreshAnalysisInBackground(); };
         LoadWorkspace(new Workspace { Name = "", Text = "" }, false);
-        documentOpen = false; ShowHome(true); EncodingText.Text = ""; SetStatus("Выберите карту, откройте файл или создайте новую цепочку.");
+        documentOpen = false; ShowHome(true); EncodingText.Text = ""; SetStatus("Выберите карту или откройте файл.");
         PreviewKeyDown += Window_KeyDown;
 
         CodeEditor.Loaded += (_, _) => AttachSyntax();
-        foreach (var editor in new[] { CodeEditor, ConditionBox, ActionBox, ElseBox }) hovers.Add(new HoverController(this, editor));
+        hovers.Add(new HoverController(this, CodeEditor));
         InitializeDocuments();
         InitializeCompletion();
         CodeEditor.PreviewKeyDown += TextEditingKey;
@@ -71,11 +73,6 @@ public partial class QuestView : UserControl
     }
     void Window_KeyDown(object sender, KeyEventArgs e)
     {
-        if (workbench != null || templateOverlay != null)
-        {
-            if (e.Key == Key.Escape) { if (workbench != null) { captureComposerDraft?.Invoke(); captureComposerDraft = null; CancelWorkbenchSearch(); Surface.Children.Remove(workbench); workbench = null; } if (templateOverlay != null) { Surface.Children.Remove(templateOverlay); templateOverlay = null; } CodeEditor.Focus(); e.Handled = true; }
-            return; // Form fields retain native editing shortcuts, including their own Undo.
-        }
         if (Keyboard.Modifiers == ModifierKeys.Alt && (e.SystemKey is Key.Left or Key.Right || e.Key is Key.Left or Key.Right))
         { try { NavigateHistory(e.SystemKey == Key.Left || e.Key == Key.Left ? -1 : 1); } catch (Exception ex) { Error(ex); } e.Handled = true; return; }
         if (e.Key == Key.F12 && CodeEditor.IsKeyboardFocusWithin)
@@ -116,10 +113,10 @@ public partial class QuestView : UserControl
     bool ResolveCard()
     {
         if (!cardDirty) return true;
-        var choice = MessageBox.Show(Window.GetWindow(this), "Применить изменения карточки к коду?", "Карточка этапа", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        var choice = MessageBox.Show(Window.GetWindow(this), "Восстановлен неприменённый черновик старой карточки. Перенести его в код? Нет — отбросить черновик; Отмена — сохранить его в recovery.", "Карточка этапа", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
         if (choice == MessageBoxResult.Cancel) return false;
-        if (choice == MessageBoxResult.Yes) return ApplyCard();
-        cardDirty = false; CodeEditor.IsReadOnly = false; PublishDocument("Отбросить черновик карточки"); return true;
+        if (choice == MessageBoxResult.Yes) return RestoreLegacyCard();
+        legacyCard = null; CodeEditor.IsReadOnly = false; PublishDocument("Отбросить черновик карточки"); return true;
     }
     bool CanLeave()
     {
@@ -132,14 +129,13 @@ public partial class QuestView : UserControl
     public void LoadWorkspace(Workspace workspace, bool modified)
     {
         if (documentOpen) RecordNavigation(CodeEditor.CaretIndex);
-        if (workbench != null) { captureComposerDraft?.Invoke(); captureComposerDraft = null; CancelWorkbenchSearch(); Surface.Children.Remove(workbench); workbench = null; }
         CloseCurrentDocument();
         documentOpen = true; ShowHome(false);
         if (!suppressPublish) saveArtifactKind = ArtifactForPath(workspace.SourcePath);
         debounce.Stop(); internalUpdate = true;
         Workspace = workspace; CodeEditor.IsUndoEnabled = false; CodeEditor.Text = workspace.Text; CodeEditor.IsUndoEnabled = documentHost == null; CodeEditor.IsReadOnly = false;
         mode = "scripts"; SearchBox.Text = "";
-        cardDirty = false; Selected = null; savedText = modified ? "" : workspace.Text; dirty = modified;
+        legacyCard = null; Selected = null; savedText = modified ? "" : workspace.Text; dirty = modified;
         internalUpdate = false; RefreshAnalysis(true); Code_Click(this, new RoutedEventArgs());
         ProjectName.Text = workspace.Name; DocumentTitle.Text = workspace.Name;
         EncodingText.Text = workspace.Mob != null ? "MOB · Windows-1251 · Ctrl+S — сохранить" : $"{workspace.TextEncoding.WebName} · Ctrl+S — сохранить";
@@ -180,7 +176,7 @@ public partial class QuestView : UserControl
     void ApplyAnalysis(Analysis result, bool chooseFirst)
     {
         bool textChanged = Current != null && Current.Text != result.Text;
-        Current = result; CardPanel.IsEnabled = !result.Issues.Any(i => i.Code == "LIMIT");
+        Current = result;
         if (syntax != null) { syntax.Update(Current); syntax.Visibility = Visibility.Visible; CodeEditor.Foreground = Brushes.Transparent; }
         var selectedName = Selected?.Name;
         Selected = selectedName == null ? null : Current.Blocks.FirstOrDefault(b => b.Name.Equals(selectedName, StringComparison.OrdinalIgnoreCase));
@@ -278,9 +274,6 @@ public partial class QuestView : UserControl
     {
         if (internalUpdate || CodeEditor == null) return;
         analysisRevision++; dirty = true; debounce.Stop(); debounce.Start(); SetStatus("Изменения в коде · анализ после ввода…");
-        // Lock stale editable spans, without disabling/repainting the entire panel.
-        ConditionBox.IsReadOnly = ActionBox.IsReadOnly = ElseBox.IsReadOnly = true;
-        ApplyCardButton.IsEnabled = false; UseElse.IsEnabled = false;
         // Native glyphs stay immediately current; never paint stale syntax over edited text.
         if (syntax != null) { syntax.Visibility = Visibility.Hidden; CodeEditor.Foreground = MalachiteTheme.Text; }
         ScheduleEditorFeedback();
@@ -385,53 +378,35 @@ public partial class QuestView : UserControl
     void FillCard(ScriptBlock block)
     {
         explainedAnalysis = null;
-        internalUpdate = true;
-        CardPanel.Visibility = Visibility.Visible; HelpPanel.Visibility = Visibility.Collapsed;
+        HelpPanel.Visibility = Visibility.Collapsed;
         ExplanationContent.Visibility = Visibility.Visible;
-        ConditionBox.Text = block.Conditions == null ? "" : Current.Slice(block.Conditions);
-        ActionBox.Text = block.Actions == null ? (block.World ? Current.Slice(block.Body) : "") : Current.Slice(block.Actions);
-        ElseBox.Text = block.ElseActions == null ? "" : Current.Slice(block.ElseActions);
-        ElsePanel.Visibility = block.CardEditable || block.ElseActions != null ? Visibility.Visible : Visibility.Collapsed;
-        UseElse.IsChecked = block.ElseActions != null; UseElse.IsEnabled = block.CardEditable;
-        ElseBox.IsEnabled = UseElse.IsChecked == true;
-        ConditionBox.IsReadOnly = ActionBox.IsReadOnly = ElseBox.IsReadOnly = !block.CardEditable;
-        ApplyCardButton.IsEnabled = block.CardEditable;
-        LinkTargets.ItemsSource = Current.Blocks.Where(b => !b.World && b.Name != block.Name && Current.Declarations.TryGetValue(b.Name, out var p) && p.Length == 0).Select(b => b.Name).ToList();
-        internalUpdate = false;
     }
-    void Card_Changed(object sender, TextChangedEventArgs e)
+    // Only recovery from older versions can contain a pending card.
+    // Keep its text until the owner transfers it to the code or discards it.
+    bool RestoreLegacyCard()
     {
-        if (internalUpdate || Current == null) return;
-        cardDirty = true; CodeEditor.IsReadOnly = true; SetStatus("Карточка изменена. Примените её к коду перед следующей операцией.");
-        PublishDocument("Изменение карточки");
-    }
-    void Else_Changed(object sender, RoutedEventArgs e)
-    {
-        if (ElseBox == null) return;
-        ElseBox.IsEnabled = UseElse.IsChecked == true;
-        if (internalUpdate || Current == null) return;
-        cardDirty = true; CodeEditor.IsReadOnly = true;
-        SetStatus("Изменение else применится вместе с карточкой. Пустой else тоже меняет порядок проверки условия.");
-        PublishDocument("Изменение ветки else");
-    }
-    public bool ApplyCard()
-    {
-        if (Selected == null || !Selected.CardEditable) return false;
+        if (legacyCard is not { } draft) return true;
         try
         {
+            var block = Current.Blocks.FirstOrDefault(b => b.Name == draft.SelectedName);
+            if (block == null || !block.CardEditable)
+                throw new InvalidDataException("Старый черновик не соответствует Script. Он сохранён в recovery.");
             var original = Workspace.Text;
-            Workspace.ApplyCard(Selected, ConditionBox.Text, ActionBox.Text, ElseBox.Text, UseElse.IsChecked == true);
-            var proposed = ScriptAnalyzer.Analyze(Workspace.Text, Registry);
-            // Editing spans may introduce syntax errors; keep them visible, never silently repair.
-            string updated = Workspace.Text; Workspace.Text = original;
-            ReplaceEditor(updated); SetStatus($"Карточка применена · замечаний: {proposed.Issues.Count}. Ctrl+Z отменяет правку."); return true;
+            string updated;
+            try
+            {
+                Workspace.ApplyCard(block, draft.Conditions, draft.Actions, draft.Otherwise, draft.UseElse);
+                updated = Workspace.Text;
+            }
+            finally { Workspace.Text = original; }
+            ReplaceEditor(updated);
+            return true;
         }
         catch (Exception ex) { Error(ex); return false; }
     }
-    void ApplyCard_Click(object sender, RoutedEventArgs e) { if (Current.Text != CodeEditor.Text) RefreshAnalysis(false); ApplyCard(); }
     public void ReplaceEditor(string text)
     {
-        internalUpdate = true; cardDirty = false; CodeEditor.IsReadOnly = false;
+        internalUpdate = true; legacyCard = null; CodeEditor.IsReadOnly = false;
         int caret = CodeEditor.CaretIndex;
         CodeEditor.BeginChange(); CodeEditor.SelectAll(); CodeEditor.SelectedText = text; CodeEditor.EndChange();
         CodeEditor.Select(Math.Min(caret, text.Length), 0); internalUpdate = false;
@@ -448,7 +423,7 @@ public partial class QuestView : UserControl
     {
         explainedAnalysis = null;
         ExplanationContent.Visibility = Visibility.Collapsed;
-        CardPanel.Visibility = Visibility.Collapsed; HelpPanel.Visibility = Visibility.Visible;
+        HelpPanel.Visibility = Visibility.Visible;
         InspectorTitle.Text = help.Title; InspectorTitle.ToolTip = MakeTip(help); InspectorHint.Text = help.Kind;
         SignatureText.Text = help.Title; HelpText.Text = help.Body; HelpProvenance.Text = help.Source;
         UsageList.ItemsSource = Current.Calls.Where(c => c.Name.Equals(help.Title, StringComparison.OrdinalIgnoreCase)).Select(c => new UsageRow($"{c.Owner} · строка {c.Line}", c.Start)).ToList();
@@ -457,7 +432,7 @@ public partial class QuestView : UserControl
     {
         explainedAnalysis = null;
         ExplanationContent.Visibility = Visibility.Collapsed;
-        var first = uses[0]; CardPanel.Visibility = Visibility.Collapsed; HelpPanel.Visibility = Visibility.Visible;
+        var first = uses[0]; HelpPanel.Visibility = Visibility.Visible;
         InspectorTitle.Text = first.Key; InspectorHint.Text = "GS-переменная · буквальный ключ";
         SignatureText.Text = "Контекст: " + first.Context;
         HelpText.Text = $"Чтений: {uses.Count(f => !f.Write)}\nЗаписей: {uses.Count(f => f.Write)}\n\n" + (uses.Any(f => f.Write) ? "Переходите к каждой записи, чтобы проверить условия её выполнения." : "В открытом документе и индексе папки нет записи. Значение может приходить из БД или обработчика движка.");
@@ -486,24 +461,6 @@ public partial class QuestView : UserControl
         GoToCode(row.Offset);
     }
     void Diagnostic_Changed(object sender, SelectionChangedEventArgs e) { if (Diagnostics.SelectedItem is Issue issue) GoToCode(issue.Offset); }
-    void Link_Click(object sender, RoutedEventArgs e)
-    {
-        if (!ResolveCard() || Selected == null || LinkTargets.SelectedItem is not string target) { SetStatus("Выберите Script в списке для добавления вызова."); return; }
-        try { RefreshAnalysis(false); Workspace.Link(Current, Selected!, target); ReplaceEditor(Workspace.Text); SetStatus("Вызов добавлен в конец then. Это запуск экземпляра Script."); }
-        catch (Exception ex) { Error(ex); }
-    }
-    void AddStage_Click(object sender, RoutedEventArgs e)
-    {
-        if (!ResolveCard()) return;
-        RefreshAnalysis(false); string name = Workspace.AddStage(Current); ReplaceEditor(Workspace.Text); SelectBlock(name, true);
-        SetStatus("Этап добавлен. Свяжите вызов с другим этапом или с WorldScript.");
-    }
-    void New_Click(object sender, RoutedEventArgs e)
-    {
-        if (documentHost == null && !CanLeave()) return;
-        if (documentHost != null) { if (openTabs.Count >= 64) { SetStatus("Закройте одну из 64 открытых вкладок."); return; } SuspendCurrentDocument(); }
-        LoadWorkspace(new() { Name = "Новая цепочка", Text = "GlobalVars\r\n(\r\n  Heroes : group\r\n)\r\n\r\nWorldScript\r\n(\r\n)\r\n" }, true);
-    }
     void Open_Click(object sender, RoutedEventArgs e)
     {
         if (documentHost == null && !CanLeave()) return;

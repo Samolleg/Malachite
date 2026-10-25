@@ -28,8 +28,8 @@ public partial class QuestView
     DocumentViewState CaptureDocumentView() => new(CodeEditor.SelectionStart, CodeEditor.SelectionLength,
         CodeEditor.VerticalOffset, CodeEditor.HorizontalOffset, mode, SearchBox.Text,
         QuestAtlasPanel.Visibility == Visibility.Visible ? "quests" : "code");
-    RecoveryState CaptureTabState() => new(2, [], CodeEditor.Text, cardDirty, ConditionBox.Text, ActionBox.Text,
-        ElseBox.Text, Selected?.Name, savedText, UseElse.IsChecked == true, CodeEditor.CaretIndex, documentId, saveArtifactKind);
+    RecoveryState CaptureTabState() => new(2, [], CodeEditor.Text, cardDirty, legacyCard?.Conditions ?? "", legacyCard?.Actions ?? "",
+        legacyCard?.Otherwise ?? "", legacyCard?.SelectedName ?? Selected?.Name, savedText, legacyCard?.UseElse == true, CodeEditor.CaretIndex, documentId, saveArtifactKind);
     void CaptureActiveTab()
     {
         if (activeTab == null) return;

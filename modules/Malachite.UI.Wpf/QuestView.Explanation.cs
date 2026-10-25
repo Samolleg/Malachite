@@ -80,7 +80,6 @@ public partial class QuestView
             Selected = position.Block;
             if (Selected != null) FillCard(Selected);
         }
-        CardPanel.Visibility = position.Block == null ? Visibility.Collapsed : Visibility.Visible;
         var panel = new StackPanel();
         TextBlock Note(string text) => new() { Text = text, TextWrapping = TextWrapping.Wrap, FontSize = 14,
             LineHeight = 22, Foreground = MalachiteTheme.Text, Margin = new Thickness(0, 0, 0, 8) };
