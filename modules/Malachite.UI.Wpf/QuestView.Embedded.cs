@@ -5,8 +5,6 @@ using DatabaseEditor.Modules.V1;
 namespace QuestStudio;
 public partial class QuestView
 {
-    public event EventHandler? RelatedDataRequested;
-    void RelatedData_Click(object sender, System.Windows.RoutedEventArgs e) => RelatedDataRequested?.Invoke(this, EventArgs.Empty);
     public bool HasPendingChanges => dirty || cardDirty || CodeEditor.Text != savedText || AllTabsPending;
     public bool ConfirmClose() => ConfirmAllDocuments();
     bool stopped;
@@ -23,7 +21,7 @@ public partial class QuestView
         SetStatus(message); Host.Report(message);
         return report.Complete && !HasPendingChanges;
     }
-    public void Stop() { if (stopped) return; stopped = true; QuestAtlasPanel.LayoutUpdated -= Atlas_LayoutUpdated; StopCompletion(); debounce.Stop(); CancelFolderIndex(); foreach (var hover in hovers) hover.Dispose(); DetachDocumentHost(); }
+    public void Stop() { if (stopped) return; stopped = true; StopCompletion(); debounce.Stop(); CancelFolderIndex(); foreach (var hover in hovers) hover.Dispose(); DetachDocumentHost(); }
     public bool RunCommand(ModuleCommand command)
     {
         if (stopped) return false;
@@ -82,7 +80,7 @@ public partial class QuestView
         return JsonSerializer.SerializeToUtf8Bytes(new RecoveryState(source == null ? 2 : 3, project, source == null && !plainTransaction ? CodeEditor.Text : "",
             cardDirty, legacyCard?.Conditions ?? "", legacyCard?.Actions ?? "", legacyCard?.Otherwise ?? "", legacyCard?.SelectedName ?? Selected?.Name, savedText, legacyCard?.UseElse == true, CodeEditor.CaretIndex, documentId, saveArtifactKind, includeAtlas
                 ? new AtlasRecovery(indexedMaps.ToArray(), folderFiles.ToArray(), atlasIndexErrors.ToArray(),
-                    false, AtlasIndirect.IsChecked == true, atlasQuest, QuestAtlasPanel.Visibility == System.Windows.Visibility.Visible)
+                    false, false, atlasQuest, QuestOverview.IsExpanded)
                 : null, source, documentOpen, HomePanel.Visibility == System.Windows.Visibility.Visible,
                 includeAtlas ? CaptureOtherTabs() : null, includeAtlas ? CaptureDocumentView() : null));
     }
@@ -151,9 +149,9 @@ public partial class QuestView
                 atlasIndexErrors.AddRange(state.Errors ?? []);
             }
             // Legacy AllMaps recovery is ignored: inventory always belongs to the current map.
-            AtlasIndirect.IsChecked = state?.Indirect == true;
             atlasQuest = state?.Quest;
-            QuestAtlasPanel.Visibility = state?.Visible == true ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            QuestOverview.Visibility = atlasQuest == null ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
+            QuestOverview.IsExpanded = state?.Visible == true;
         }
         finally { atlasUpdating = false; }
         // Cached models are snapshots only. Navigation still uses host-authorized reads and hash checks.

@@ -8,12 +8,6 @@ using DatabaseEditor.Modules.V1;
 namespace QuestStudio;
 public partial class QuestView
 {
-    void Atlas_LayoutUpdated(object? sender, EventArgs e)
-    {
-        if (stopped || QuestAtlasPanel.Visibility != Visibility.Visible || QuestAtlasPanel.Parent is not Grid area) return;
-        double available = Math.Max(0, Surface.RowDefinitions[1].ActualHeight - area.Margin.Top - area.Margin.Bottom - area.RowDefinitions[0].ActualHeight);
-        if (double.IsNaN(QuestAtlasPanel.Height) || Math.Abs(QuestAtlasPanel.Height - available) > .5) QuestAtlasPanel.Height = available;
-    }
     string? atlasQuest;
     bool atlasUpdating;
     int atlasRefreshRevision;
@@ -23,58 +17,24 @@ public partial class QuestView
         => MapQuestInventory.Title(quest, snapshot);
     public void RefreshQuestAtlas()
     {
-        // Index/DB changes must also refresh a stationary inspector in the code view.
         explainedAnalysis = null;
-        if (stopped || QuestAtlasPanel == null || atlasUpdating || Current == null) return;
+        if (stopped || QuestOverview == null || atlasUpdating || Current == null) return;
         int revision = ++atlasRefreshRevision;
-        if (QuestAtlasPanel.Visibility != Visibility.Visible) { ExplainAt(CodeEditor.CaretIndex); return; }
-        atlasUpdating = true;
-        try
-        {
-            var snapshot = Host.Workspace.Snapshot();
-            var items = MapQuestInventory.Read(Current, snapshot, AtlasPath, AtlasIndirect.IsChecked == true);
-            var inventory = new ListCollectionView(items.Where(q => q.Category != 1).ToArray());
-            var checks = new ListCollectionView(items.Where(q => q.Category == 1).ToArray());
-            checks.Filter = AtlasMatchesSearch;
-            AtlasOtherChecks.ItemsSource = checks;
-            AtlasOtherChecks.SelectedItem = AtlasOtherChecks.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Keys.Contains(atlasQuest, StringComparer.Ordinal));
-            AtlasOtherExpander.Header = "Только проверяются здесь · " + items.Count(q => q.Category == 1);
-            AtlasOtherExpander.Visibility = items.Any(q => q.Category == 1) ? Visibility.Visible : Visibility.Collapsed;
-            inventory.GroupDescriptions.Add(new PropertyGroupDescription(nameof(MapQuestItem.Group)));
-            inventory.Filter = AtlasMatchesSearch;
-            AtlasQuests.ItemsSource = inventory;
-            AtlasQuests.SelectedItem = AtlasQuests.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Keys.Contains(atlasQuest, StringComparer.Ordinal));
-            AtlasNodes.Children.Clear();
-            AtlasStatus.Text = (folderIndexing ? "Индексируется… " + folderProgress : mapsStatus) + $" · индекс диска: {indexedMaps.Count} карт · ошибок индекса {atlasIndexErrors.Count}" +
-                (snapshot.Modified ? " · снимок БД: есть несохранённые изменения" : " · текущий снимок БД");
-            AtlasStatus.ToolTip = "Индекс — снимок диска на момент чтения. Открытые вкладки заменяют его текущим текстом. Обновить диск: Папка MOB…";
-            AtlasNodes.Children.Add(AtlasLazyAsync("Просмотренные карты и пробелы источников", async () => AtlasCoverage((await AtlasSourcesAsync()).Maps)));
-            if (atlasQuest == null) { AtlasNodes.Children.Add(AtlasNote(!items.Any(q => q.Category != 1) ? "На этой карте квесты не найдены. Включите квесты через брифинги или откройте обзор из GS-строки Инспектора." : "Выберите квест слева. У каждой строки указана причина; точные обращения — в подсказке и обзоре.")); return; }
-            var selected = items.FirstOrDefault(q => q.Keys.Contains(atlasQuest, StringComparer.Ordinal));
-            if (selected is { Keys.Length: > 1 })
-            {
-                AtlasNodes.Children.Add(AtlasNote(selected.ToString()));
-                AtlasNodes.Children.Add(AtlasLazy("Ключи квеста · " + selected.Keys.Length, () =>
-                {
-                    var panel = new StackPanel();
-                    panel.Children.Add(AtlasNote("Выберите полный ключ. Обзор и зависимости ниже относятся только к выбранному корню.", true));
-                    foreach (var key in selected.Keys)
-                    {
-                        var button = new Button { Content = key, HorizontalContentAlignment = HorizontalAlignment.Left, Margin = new(0, 3, 0, 0) };
-                        button.Click += (_, _) => { atlasQuest = key; RefreshQuestAtlas(); };
-                        panel.Children.Add(button);
-                    }
-                    return panel;
-                }));
-            }
-            _ = LoadAtlasOverviewAsync(atlasQuest, snapshot, revision);
-        }
-        finally { atlasUpdating = false; }
+        AtlasNodes.Children.Clear();
+        if (atlasQuest == null || !QuestOverview.IsExpanded) return;
+        var snapshot = Host.Workspace.Snapshot();
+        AtlasStatus.Text = (folderIndexing ? folderProgress : mapsStatus) + " · текущий снимок БД";
+        AtlasNodes.Children.Add(AtlasLazyAsync("Просмотренные карты и пробелы источников", async () => AtlasCoverage((await AtlasSourcesAsync()).Maps)));
+        _ = LoadAtlasOverviewAsync(atlasQuest, snapshot, revision);
+    }
+    void QuestOverview_Expanded(object sender, RoutedEventArgs e)
+    {
+        if (ReferenceEquals(e.Source, QuestOverview)) RefreshQuestAtlas();
     }
     async Task LoadAtlasOverviewAsync(string quest, WorkspaceSnapshot snapshot, int revision)
     {
-        bool includeBriefings = AtlasIndirect.IsChecked == true;
-        bool Active() => !stopped && revision == atlasRefreshRevision && QuestAtlasPanel.Visibility == Visibility.Visible;
+        bool includeBriefings = true;
+        bool Active() => !stopped && revision == atlasRefreshRevision && QuestOverview.IsExpanded;
         var loading = AtlasNote("Индексируется… подготовка выбранного квеста", true); AtlasNodes.Children.Add(loading);
         try
         {
@@ -125,25 +85,6 @@ public partial class QuestView
         }
         catch (Exception ex) { if (Active()) loading.Text = "Не удалось построить обзор: " + ex.Message; }
     }
-    bool AtlasMatchesSearch(object item) => item is MapQuestItem q &&
-        (q.Title.Contains(AtlasSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase) || q.Keys.Any(key => key.Contains(AtlasSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase)));
-    void AtlasSearch_Changed(object sender, TextChangedEventArgs e)
-    {
-        if (AtlasQuests?.ItemsSource is not ListCollectionView inventory) return;
-        atlasUpdating = true;
-        try
-        {
-            inventory.Refresh();
-            if (AtlasOtherChecks.ItemsSource is ListCollectionView checks) checks.Refresh();
-            AtlasQuests.SelectedItem = AtlasQuests.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Keys.Contains(atlasQuest, StringComparer.Ordinal));
-            AtlasOtherChecks.SelectedItem = AtlasOtherChecks.Items.OfType<MapQuestItem>().FirstOrDefault(q => q.Keys.Contains(atlasQuest, StringComparer.Ordinal));
-        }
-        finally { atlasUpdating = false; }
-    }
-    void Atlas_Click(object sender, RoutedEventArgs e) { atlasQuest = null; AtlasOtherExpander.IsExpanded = false; QuestAtlasPanel.Visibility = Visibility.Visible; CodeButton.BorderBrush = (Brush)FindResource("Line"); RefreshQuestAtlas(); }
-    void AtlasClose_Click(object sender, RoutedEventArgs e) => Code_Click(sender, e);
-    void AtlasSelection_Changed(object sender, SelectionChangedEventArgs e) { if (!atlasUpdating && sender is ListBox { SelectedItem: MapQuestItem quest }) { atlasQuest = quest.Key; RefreshQuestAtlas(); } }
-    void AtlasScope_Changed(object sender, RoutedEventArgs e) => RefreshQuestAtlas();
     public void NavigateQuestPoint(QuestPoint point)
     {
         if (point.Record != null) { var result = Host.Workspace.Navigate(point.Record); if (!result.Succeeded) Host.Report(result.Message); return; }

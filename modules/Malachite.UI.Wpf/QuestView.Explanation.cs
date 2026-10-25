@@ -115,14 +115,14 @@ public partial class QuestView
             panel.Children.Add(new TextBlock { Text = "ЭТАП · " + block.Display, Foreground = MalachiteTheme.Accent, Margin = new Thickness(0, 10, 0, 8) });
             panel.Children.Add(ScenarioView(summary));
         }
+        AddNavigatorQuestText(panel, position);
         AddAtlasContext(panel, position);
         int sourceStart = call?.Start ?? position.Start, sourceEnd = call?.End ?? position.End;
         panel.Children.Add(new Expander { Header = "Исходный код · строка " + position.Line,
             Content = ExplanationSource(sourceStart, sourceEnd), Foreground = MalachiteTheme.Muted,
             IsExpanded = description.StartsWith("не объяснено:", StringComparison.Ordinal) });
         if (help != null) panel.Children.Add(new Expander { Header = "Справка и данные БД", Content = HelpView(help), Foreground = MalachiteTheme.Muted });
-        ExplanationContent.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, MaxHeight = 480 };
+        ExplanationContent.Content = panel;
         explainedAnalysis = Current; explainedLine = position.Line; explainedFocus = focus; explanationWaiting = false;
     }
 }

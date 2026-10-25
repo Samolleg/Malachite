@@ -20,7 +20,6 @@ public partial class QuestView
     void ShowFind(bool replace)
     {
         if (HomePanel.Visibility == Visibility.Visible) { HomeSearch.Focus(); HomeSearch.SelectAll(); return; }
-        QuestAtlasPanel.Visibility = Visibility.Collapsed;
         FindPanel.Visibility = Visibility.Visible;
         ReplaceRow.Visibility = replace ? Visibility.Visible : Visibility.Collapsed;
         if (CodeEditor.SelectionLength > 0 && !CodeEditor.SelectedText.Contains('\n')) FindText.Text = CodeEditor.SelectedText;

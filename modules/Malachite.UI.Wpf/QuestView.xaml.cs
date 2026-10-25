@@ -23,7 +23,7 @@ public partial class QuestView : UserControl
     public ScriptBlock? Selected { get; private set; }
     readonly DispatcherTimer debounce = new() { Interval = TimeSpan.FromMilliseconds(650) };
     readonly List<string> folderFiles = [];
-    bool internalUpdate, dirty, navigating;
+    bool internalUpdate, dirty;
     RecoveryState? legacyCard;
     bool cardDirty => legacyCard?.CardDirty == true;
     SyntaxLayer? syntax;
@@ -39,8 +39,7 @@ public partial class QuestView : UserControl
         folderVersion++; folderCancellation?.Cancel(); folderCancellation = null;
         folderIndexing = false;
     }
-    string mode = "scripts", savedText = Workspace.Demo;
-    public sealed record NavRow(string Title, string Subtitle, string Kind, object Value);
+    string mode = "quests", savedText = Workspace.Demo;
     public sealed record UsageRow(string Text, int Offset, string? Path = null, string? Hash = null) { public override string ToString() => Text; }
     public sealed record IndexedMap(string Path, string Hash, List<FlagUse> Flags)
     {
@@ -134,7 +133,7 @@ public partial class QuestView : UserControl
         if (!suppressPublish) saveArtifactKind = ArtifactForPath(workspace.SourcePath);
         debounce.Stop(); internalUpdate = true;
         Workspace = workspace; CodeEditor.IsUndoEnabled = false; CodeEditor.Text = workspace.Text; CodeEditor.IsUndoEnabled = documentHost == null; CodeEditor.IsReadOnly = false;
-        mode = "scripts"; SearchBox.Text = "";
+        mode = "quests"; ResetNavigator(); SearchBox.Text = "";
         legacyCard = null; Selected = null; savedText = modified ? "" : workspace.Text; dirty = modified;
         internalUpdate = false; RefreshAnalysis(true); Code_Click(this, new RoutedEventArgs());
         ProjectName.Text = workspace.Name; DocumentTitle.Text = workspace.Name;
@@ -180,7 +179,7 @@ public partial class QuestView : UserControl
         if (syntax != null) { syntax.Update(Current); syntax.Visibility = Visibility.Visible; CodeEditor.Foreground = Brushes.Transparent; }
         var selectedName = Selected?.Name;
         Selected = selectedName == null ? null : Current.Blocks.FirstOrDefault(b => b.Name.Equals(selectedName, StringComparison.OrdinalIgnoreCase));
-        if (textChanged && !chooseFirst && !cardDirty && mode == "scripts") Selected = Current.BlockAt(CodeEditor.CaretIndex) ?? Selected;
+        if (textChanged && !chooseFirst && !cardDirty) Selected = Current.BlockAt(CodeEditor.CaretIndex) ?? Selected;
         if (Selected == null && chooseFirst) Selected = Current.Blocks.FirstOrDefault(b => !b.World) ?? Current.Blocks.FirstOrDefault();
         DocumentSummary.Text = $"{CountLabel(Current.Blocks.Count(b => !b.World), "скрипт", "скрипта", "скриптов")}  /  {CountLabel(Current.Calls.Count, "вызов", "вызова", "вызовов")}  /  {Current.Flags.Select(f => (f.Context, f.Key)).Distinct().Count()} GS-ключей";
         int errors = Current.Issues.Count(i => i.Severity == "error"), warnings = Current.Issues.Count(i => i.Severity == "warning");
@@ -189,7 +188,7 @@ public partial class QuestView : UserControl
         if (Current.Issues.Count == 0) Diagnostics.ItemsSource = new[] { new Issue("info", "CLEAN", "В рамках локальных правил замечаний нет. Результат не заменяет компиляцию движком.", 0, 1) };
         FillNavigation();
         RefreshQuestAtlas();
-        if (!cardDirty && Selected != null && mode == "scripts") FillCard(Selected);
+        if (!cardDirty && Selected != null) FillCard(Selected);
         dirty = Workspace.Text != savedText;
         Title = $"{(dirty ? "● " : "")}{Workspace.Name} — Малахит";
         SetStatus($"Проверка обновлена · {errors} ошибок · {warnings} предупреждений.");
@@ -221,13 +220,11 @@ public partial class QuestView : UserControl
     void ItemTip_Opening(object sender, ToolTipEventArgs e)
     {
         if (sender is not ListBoxItem item) return;
+        if (item.Content is NavigatorRow nav) { item.ToolTip = AtlasNote(nav.Tooltip); return; }
         if (item.Content is MapQuestItem quest) { item.ToolTip = AtlasNote(quest.Proof); return; }
         if (item.Content is HomeMap map) { item.ToolTip = map.Path; return; }
         HoverHelp? help = item.Content switch
         {
-            NavRow { Kind: "block", Value: ScriptBlock block } => Help.Symbol(Current, block.Name),
-            NavRow { Kind: "command", Value: CommandInfo command } => Help.Command(command.Name),
-            NavRow { Kind: "flag", Value: List<FlagUse> flags } => new(flags[0].Key, "Переменная состояния GS", $"Контекст {flags[0].Context}. Найдено чтений: {flags.Count(f => !f.Write)}, записей: {flags.Count(f => f.Write)}. Нажмите, чтобы перейти к местам использования. Значение и смысл определяются кодом, а не именем ключа.", "Источник: открытый документ и индекс папки."),
             string name => Help.Symbol(Current, name),
             Issue issue => DiagnosticHelp(issue),
             UsageRow usage => new(usage.Text, "Место использования", "Нажмите для перехода к соответствующему месту в коде.", "Источник: статический индекс."),
@@ -267,8 +264,8 @@ public partial class QuestView : UserControl
     {
         if (Tagline == null) return;
         Tagline.Visibility = e.NewSize.Width < 1280 ? Visibility.Collapsed : Visibility.Visible;
-        if (!sidebarHidden) SidebarColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 210 : 236);
-        if (!inspectorHidden) InspectorColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 280 : 325);
+        SidebarColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 250 : 310);
+        InspectorColumn.Width = new GridLength(e.NewSize.Width < 1250 ? 280 : 350);
     }
     void Code_Changed(object sender, TextChangedEventArgs e)
     {
@@ -286,67 +283,16 @@ public partial class QuestView : UserControl
         int line = CodeEditor.GetLineIndexFromCharacterIndex(CodeEditor.CaretIndex);
         CaretLabel.Text = $"стр. {line + 1} · ст. {CodeEditor.CaretIndex - Math.Max(0, CodeEditor.GetCharacterIndexFromLineIndex(line)) + 1}";
         if (internalUpdate || Current == null || cardDirty || Current.Text != CodeEditor.Text) return;
-        if (mode == "functions")
-        {
-            var call = Current.Calls.Where(c => c.Start <= CodeEditor.CaretIndex && c.End >= CodeEditor.CaretIndex).MinBy(c => c.End - c.Start);
-            if (call != null && Registry.Commands.TryGetValue(call.Name, out var cmd)) ShowCommand(cmd);
-        }
-        else if (mode == "scripts") SyncSelectionToCaret();
+        SyncSelectionToCaret();
         ExplainAt(CodeEditor.CaretIndex);
     }
     void SyncSelectionToCaret()
     {
-        if (Current == null || Current.Text != CodeEditor.Text || cardDirty || mode != "scripts") return;
+        if (Current == null || Current.Text != CodeEditor.Text || cardDirty) return;
         var block = CurrentCodeContext().At(CodeEditor.CaretIndex).Block;
         if (Selected == block) return;
         Selected = block;
-        navigating = true;
-        Navigation.SelectedItem = Navigation.Items.OfType<NavRow>().FirstOrDefault(r => r.Kind == "block" && ((ScriptBlock)r.Value).Name == block?.Name);
-        if (Navigation.SelectedItem != null) Navigation.ScrollIntoView(Navigation.SelectedItem);
-        navigating = false;
         if (block != null) FillCard(block);
-    }
-    void Search_Changed(object sender, TextChangedEventArgs e) { if (Current != null) FillNavigation(); }
-    void Scripts_Click(object sender, RoutedEventArgs e) { if (!ResolveCard()) return; mode = "scripts"; FillNavigation(); if (Selected != null) FillCard(Selected); }
-    void Functions_Click(object sender, RoutedEventArgs e) { if (!ResolveCard()) return; mode = "functions"; FillNavigation(); }
-    void Flags_Click(object sender, RoutedEventArgs e) { if (!ResolveCard()) return; mode = "flags"; FillNavigation(); }
-    void FillNavigation()
-    {
-        if (Navigation == null || Current == null) return;
-        UpdateHomeMaps();
-        navigating = true;
-        string query = SearchBox.Text.Trim();
-        var rows = new List<NavRow>();
-        if (mode == "scripts")
-        {
-            foreach (var b in Current.Blocks)
-            {
-                bool match = b.Name.Contains(query, StringComparison.OrdinalIgnoreCase) || (query.Length > 0 && Workspace.Text[b.Start..b.End].Contains(query, StringComparison.OrdinalIgnoreCase));
-                if (match) rows.Add(new(b.Display, $"стр. {b.Line}  ·  {b.Calls.Count} вызовов", "block", b));
-            }
-        }
-        else if (mode == "functions")
-        {
-            rows.AddRange(Registry.Commands.Values.Where(c => (c.Name + " " + c.Note + " " + Help.Entries[c.Name].Purpose).Contains(query, StringComparison.OrdinalIgnoreCase)).OrderBy(c => c.Name).Select(c => new NavRow(c.Name, c.DebugOnly ? "Только Debug · недоступна" : c.Internal ? "Служебная · if/else" : c.OverridesNative ? "Расширена аддоном" : c.Native ? "Штатная · " + HelpService.TypeName(c.ReturnType) : "Команда аддона", "command", c)));
-        }
-        else rows.AddRange(Current.Flags.Concat(indexedMaps.Where(m => !m.Path.Equals(Workspace.SourcePath, StringComparison.OrdinalIgnoreCase)).SelectMany(m => m.Flags)).GroupBy(f => (f.Context, f.Key)).Where(g => g.Key.Key.Contains(query, StringComparison.OrdinalIgnoreCase)).OrderBy(g => g.Key.Key).Select(g => new NavRow(g.Key.Key, $"контекст {g.Key.Context} · чтение {g.Count(f => !f.Write)} / запись {g.Count(f => f.Write)}", "flag", g.ToList())));
-        Navigation.ItemsSource = rows;
-        if (Selected != null && mode == "scripts") Navigation.SelectedItem = rows.FirstOrDefault(r => r.Kind == "block" && ((ScriptBlock)r.Value).Name == Selected.Name);
-        if (Navigation.SelectedItem != null && mode == "scripts") Navigation.ScrollIntoView(Navigation.SelectedItem);
-        navigating = false;
-    }
-    void Navigation_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        if (navigating || Navigation.SelectedItem is not NavRow row) return;
-        if (!ResolveCard()) { FillNavigation(); return; }
-        if (Current.Text != CodeEditor.Text) RefreshAnalysis(false);
-        switch (row.Kind)
-        {
-            case "block": SelectBlock(((ScriptBlock)row.Value).Name, true); break;
-            case "command": ShowCommand((CommandInfo)row.Value); break;
-            case "flag": ShowFlag((List<FlagUse>)row.Value); break;
-            case "file": OpenPath((string)row.Value); break;
-        }
     }
     public void SelectBlock(string name, bool goToCode)
     {
@@ -354,12 +300,11 @@ public partial class QuestView : UserControl
         if (Current.Text != CodeEditor.Text) RefreshAnalysis(false);
         Selected = Current.Blocks.FirstOrDefault(b => b.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (Selected == null) return;
-        mode = "scripts"; FillNavigation(); FillCard(Selected);
+        FillCard(Selected);
         if (goToCode) GoToCode(Selected.Start);
     }
     void GoToCode(int offset)
     {
-        if (QuestAtlasPanel.Visibility == Visibility.Visible) Code_Click(this, new RoutedEventArgs());
         GoTo(offset);
     }
     void GoTo(int offset)
@@ -413,12 +358,6 @@ public partial class QuestView : UserControl
         Workspace.Text = text; RefreshAnalysis(false);
         PublishDocument("Изменение сценария");
     }
-    void ShowCommand(CommandInfo command)
-    {
-        ShowHelp(Help.Command(command.Name));
-        SignatureText.Text = command.Signature;
-        UsageList.ItemsSource = Current.Calls.Where(c => c.Name.Equals(command.Name, StringComparison.OrdinalIgnoreCase)).Select(c => new UsageRow($"{c.Owner} · строка {c.Line}", c.Start)).ToList();
-    }
     void ShowHelp(HoverHelp help)
     {
         explainedAnalysis = null;
@@ -427,19 +366,6 @@ public partial class QuestView : UserControl
         InspectorTitle.Text = help.Title; InspectorTitle.ToolTip = MakeTip(help); InspectorHint.Text = help.Kind;
         SignatureText.Text = help.Title; HelpText.Text = help.Body; HelpProvenance.Text = help.Source;
         UsageList.ItemsSource = Current.Calls.Where(c => c.Name.Equals(help.Title, StringComparison.OrdinalIgnoreCase)).Select(c => new UsageRow($"{c.Owner} · строка {c.Line}", c.Start)).ToList();
-    }
-    void ShowFlag(List<FlagUse> uses)
-    {
-        explainedAnalysis = null;
-        ExplanationContent.Visibility = Visibility.Collapsed;
-        var first = uses[0]; HelpPanel.Visibility = Visibility.Visible;
-        InspectorTitle.Text = first.Key; InspectorHint.Text = "GS-переменная · буквальный ключ";
-        SignatureText.Text = "Контекст: " + first.Context;
-        HelpText.Text = $"Чтений: {uses.Count(f => !f.Write)}\nЗаписей: {uses.Count(f => f.Write)}\n\n" + (uses.Any(f => f.Write) ? "Переходите к каждой записи, чтобы проверить условия её выполнения." : "В открытом документе и индексе папки нет записи. Значение может приходить из БД или обработчика движка.");
-        HelpProvenance.Text = "Буквальные ключи GSGetVar / GSSetVar / GSSetVarMax / GSDelVar. Индекс папки — снимок на момент открытия. Совпадение ключей не доказывает достижимость этапа.";
-        var rows = Current.Flags.Where(f => f.Context == first.Context && f.Key == first.Key).Select(f => new UsageRow($"{(f.Delete ? "УДАЛЕНИЕ" : f.Write ? "ЗАПИСЬ " + f.Value : "ЧТЕНИЕ")} · {f.Owner} · {f.Line}", f.Offset)).ToList();
-        rows.AddRange(indexedMaps.Where(m => !m.Path.Equals(Workspace.SourcePath, StringComparison.OrdinalIgnoreCase)).SelectMany(m => m.Flags.Where(f => f.Context == first.Context && f.Key == first.Key).Select(f => new UsageRow($"{System.IO.Path.GetFileName(m.Path)} · {(f.Delete ? "УДАЛЕНИЕ" : f.Write ? "ЗАПИСЬ" : "ЧТЕНИЕ")} · {f.Owner}:{f.Line}", f.Offset, m.Path, m.Hash))));
-        UsageList.ItemsSource = rows;
     }
     void Usage_Changed(object sender, SelectionChangedEventArgs e)
     {
@@ -490,7 +416,7 @@ public partial class QuestView : UserControl
             cancellation = new CancellationTokenSource(); folderCancellation = cancellation;
             folderIndexing = true; folderProgress = $"Индексация MOB: 0 / {files.Length}";
             atlasIndexErrors.Clear();
-            mode = "scripts"; FillNavigation(); SetStatus($"Чтение GS-связей из {files.Length} MOB…");
+            FillNavigation(); SetStatus($"Чтение GS-связей из {files.Length} MOB…");
             RefreshQuestAtlas();
             var progress = new Progress<(int Done, string Name)>(p =>
             {
@@ -568,8 +494,6 @@ public partial class QuestView : UserControl
     }
     void Code_Click(object sender, RoutedEventArgs e)
     {
-        QuestAtlasPanel.Visibility = Visibility.Collapsed;
-        CodeButton.BorderBrush = MalachiteTheme.Accent;
         UpdateEditorBounds(); ExplainAt(CodeEditor.CaretIndex);
     }
 }

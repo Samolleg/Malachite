@@ -104,8 +104,8 @@ public partial class QuestView
     void OpenWholeQuest(QuestPoint point)
     {
         atlasQuest = point.Quest.Length > 0 ? point.Quest : "@GS:" + point.Key;
-        QuestAtlasPanel.Visibility = Visibility.Visible;
-        CodeButton.BorderBrush = (System.Windows.Media.Brush)FindResource("Line");
+        QuestOverview.Visibility = Visibility.Visible;
+        QuestOverview.IsExpanded = true;
         RefreshQuestAtlas();
     }
     async void AddAtlasContext(StackPanel panel, CodeContextIndex.Position position)

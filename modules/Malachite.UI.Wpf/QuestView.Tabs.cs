@@ -27,7 +27,7 @@ public partial class QuestView
     bool historyCommand;
     DocumentViewState CaptureDocumentView() => new(CodeEditor.SelectionStart, CodeEditor.SelectionLength,
         CodeEditor.VerticalOffset, CodeEditor.HorizontalOffset, mode, SearchBox.Text,
-        QuestAtlasPanel.Visibility == Visibility.Visible ? "quests" : "code");
+        "code");
     RecoveryState CaptureTabState() => new(2, [], CodeEditor.Text, cardDirty, legacyCard?.Conditions ?? "", legacyCard?.Actions ?? "",
         legacyCard?.Otherwise ?? "", legacyCard?.SelectedName ?? Selected?.Name, savedText, legacyCard?.UseElse == true, CodeEditor.CaretIndex, documentId, saveArtifactKind);
     void CaptureActiveTab()
@@ -84,13 +84,9 @@ public partial class QuestView
     }
     void RestoreDocumentView(DocumentViewState view)
     {
-        mode = view.Mode is "scripts" or "functions" or "flags" ? view.Mode : "scripts";
+        mode = view.Mode == "scripts" ? "scripts" : "quests";
+        ResetNavigator();
         SearchBox.Text = view.Search; FillNavigation();
-        switch (view.Layout)
-        {
-            case "quests": Atlas_Click(this, new()); break;
-            default: Code_Click(this, new()); break;
-        }
         internalUpdate = true;
         try { CodeEditor.Select(Math.Clamp(view.Caret, 0, CodeEditor.Text.Length), Math.Clamp(view.SelectionLength, 0, CodeEditor.Text.Length - Math.Clamp(view.Caret, 0, CodeEditor.Text.Length))); }
         finally { internalUpdate = false; }

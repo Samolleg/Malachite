@@ -20,7 +20,6 @@ public partial class QuestView
         }
         else
         {
-            RelatedDataRequested?.Invoke(this, EventArgs.Empty);
             Host.Report(context?.Explanation ?? "Поставьте курсор на ключ QuestComplete или точный ключ текстового ресурса.");
         }
     }
@@ -44,7 +43,7 @@ public partial class QuestView
         if (context == null) return original;
         var help = new HoverHelp(original?.Title ?? context.Title, original?.Kind ?? "Данные текущей БД",
             (original == null ? "" : original.Body + "\n\n") + context.Title + "\n" + context.Description,
-            "Ctrl+Enter — открыть запись под курсором. «Данные БД» — постоянная панель. Источник: текущий снимок Редактора БД.");
+            "Ctrl+Enter — открыть запись под курсором. Источник: текущий снимок Редактора БД.");
         databaseHelp.Add(help, context);
         return help;
     }
@@ -72,7 +71,7 @@ public partial class QuestView
         atlasDataRevision++;
         atlasExplanations.Clear();
         codeContext = null;
-        RefreshQuestAtlas();
+        ResetNavigator(); FillNavigation(); RefreshQuestAtlas();
         explainedAnalysis = null; ExplainAt(CodeEditor.CaretIndex);
     }
 }
