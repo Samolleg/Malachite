@@ -16,6 +16,7 @@ public sealed class SyntaxLayer : Adorner
     readonly HashSet<int> functions = [];
     readonly Dictionary<int, int> pairs = [];
     readonly Dictionary<int, List<(int Offset, FormattedText Text)>> lines = [];
+    readonly Dictionary<int, FormattedText> lineNumbers = [];
     string? source;
     double dpi;
     static readonly HashSet<string> Keywords = new(new[] { "Script", "DeclareScript", "WorldScript", "GlobalVars", "if", "then", "else", "object", "group", "float", "string" }, StringComparer.OrdinalIgnoreCase);
@@ -33,7 +34,7 @@ public sealed class SyntaxLayer : Adorner
     {
         if (source == text) { InvalidateVisual(); return; }
         source = text; tokens = getTokens?.Invoke() ?? EditorLexical.Scan(text);
-        functions.Clear(); pairs.Clear(); lines.Clear();
+        functions.Clear(); pairs.Clear(); lines.Clear(); lineNumbers.Clear();
         EditorSpan? previous = null; var stack = new Stack<int>();
         foreach (var token in tokens)
         {
@@ -81,7 +82,7 @@ public sealed class SyntaxLayer : Adorner
         if (Visibility != Visibility.Visible || source != editor.Text) return;
         if (editor.LineCount < 1 || editor.ActualWidth < 80 || editor.ActualHeight < 25) return;
         double currentDpi = VisualTreeHelper.GetDpi(editor).PixelsPerDip;
-        if (dpi != currentDpi) { dpi = currentDpi; lines.Clear(); }
+        if (dpi != currentDpi) { dpi = currentDpi; lines.Clear(); lineNumbers.Clear(); }
         int first = editor.GetFirstVisibleLineIndex(), last = editor.GetLastVisibleLineIndex();
         if (first < 0 || last < 0) return;
         double right = Math.Max(58, editor.ActualWidth - 12), bottom = Math.Max(0, editor.ActualHeight - 12);
@@ -111,7 +112,11 @@ public sealed class SyntaxLayer : Adorner
         {
             var rect = editor.GetRectFromCharacterIndex(editor.GetCharacterIndexFromLineIndex(line), false);
             if (rect.IsEmpty) continue;
-            var number = Format((line + 1).ToString(CultureInfo.InvariantCulture), Comment);
+            if (!lineNumbers.TryGetValue(line, out var number))
+            {
+                if (lineNumbers.Count > 200) lineNumbers.Clear();
+                lineNumbers[line] = number = Format((line + 1).ToString(CultureInfo.InvariantCulture), Comment);
+            }
             dc.DrawText(number, new Point(46 - number.Width, rect.Y));
         }
         if (!active.IsEmpty) dc.DrawRectangle(Accent, null, new Rect(0, active.Y, 3, active.Height));
