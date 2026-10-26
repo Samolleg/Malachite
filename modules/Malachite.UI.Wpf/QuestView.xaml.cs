@@ -127,7 +127,7 @@ public partial class QuestView : UserControl
     }
     public void LoadWorkspace(Workspace workspace, bool modified)
     {
-        if (documentOpen) RecordNavigation(CodeEditor.CaretIndex);
+        InvalidateCompiler(); if (documentOpen) RecordNavigation(CodeEditor.CaretIndex);
         CloseCurrentDocument();
         documentOpen = true; ShowHome(false);
         if (!suppressPublish) saveArtifactKind = ArtifactForPath(workspace.SourcePath);
@@ -269,7 +269,7 @@ public partial class QuestView : UserControl
     }
     void Code_Changed(object sender, TextChangedEventArgs e)
     {
-        if (internalUpdate || CodeEditor == null) return;
+        if (internalUpdate || CodeEditor == null) return; InvalidateCompiler();
         analysisRevision++; dirty = true; debounce.Stop(); debounce.Start(); SetStatus("Изменения в коде · анализ после ввода…");
         // Native glyphs stay immediately current; never paint stale syntax over edited text.
         if (syntax != null) { syntax.Visibility = Visibility.Hidden; CodeEditor.Foreground = MalachiteTheme.Text; }
@@ -351,7 +351,7 @@ public partial class QuestView : UserControl
     }
     public void ReplaceEditor(string text)
     {
-        internalUpdate = true; legacyCard = null; CodeEditor.IsReadOnly = false;
+        InvalidateCompiler(); internalUpdate = true; legacyCard = null; CodeEditor.IsReadOnly = false;
         int caret = CodeEditor.CaretIndex;
         CodeEditor.BeginChange(); CodeEditor.SelectAll(); CodeEditor.SelectedText = text; CodeEditor.EndChange();
         CodeEditor.Select(Math.Min(caret, text.Length), 0); internalUpdate = false;
@@ -474,11 +474,6 @@ public partial class QuestView : UserControl
                 : Host.Files.Export(System.IO.Path.GetFileNameWithoutExtension(Workspace.Name) + "-edited" + (mob ? ".mob" : ".txt"), mob ? "MOB-копия|*.mob" : "Текст|*.txt", bytes);
             SetStatus(result.Succeeded ? "Экспортирована проверенная копия; исходный файл не изменён." : result.Message);
         } catch (Exception ex) { Error(ex); }
-    }
-    void Check_Click(object sender, RoutedEventArgs e)
-    {
-        if (!ResolveCard()) return;
-        RefreshAnalysis(false); SetStatus("Проверены доступные статические правила. Компилятор игры не запускался.");
     }
     public static (List<IndexedMap> Maps, List<string> Errors) IndexFolder(string[] files, CommandRegistry registry, IModuleFileBrowser browser, Action<int, string>? progress = null, CancellationToken cancellation = default)
     {

@@ -12,12 +12,12 @@ public partial class QuestView
     int explainedLine = -1, explainedFocus = -1;
     bool explanationWaiting;
     bool checksHidden;
-    double checksHeight = 120;
+    double checksHeight = 210;
     void ChecksToggle_Click(object sender, RoutedEventArgs e)
     {
         checksHidden = !checksHidden;
         if (checksHidden) checksHeight = DiagnosticsRow.ActualHeight;
-        Diagnostics.Visibility = DiagnosticsSplitter.Visibility = checksHidden ? Visibility.Collapsed : Visibility.Visible;
+        ChecksBody.Visibility = DiagnosticsSplitter.Visibility = checksHidden ? Visibility.Collapsed : Visibility.Visible;
         EditorArea.RowDefinitions[2].Height = new GridLength(checksHidden ? 0 : 8);
         DiagnosticsRow.MinHeight = checksHidden ? 36 : 70; DiagnosticsRow.Height = new GridLength(checksHidden ? 36 : Math.Max(70, checksHeight));
         ChecksToggle.Content = checksHidden ? "Проверки ▸" : "Проверки ▾";

@@ -21,7 +21,7 @@ public partial class QuestView
         SetStatus(message); Host.Report(message);
         return report.Complete && !HasPendingChanges;
     }
-    public void Stop() { if (stopped) return; stopped = true; StopCompletion(); debounce.Stop(); CancelFolderIndex(); foreach (var hover in hovers) hover.Dispose(); DetachDocumentHost(); }
+    public void Stop() { if (stopped) return; stopped = true; InvalidateCompiler(); StopCompletion(); debounce.Stop(); CancelFolderIndex(); foreach (var hover in hovers) hover.Dispose(); DetachDocumentHost(); }
     public bool RunCommand(ModuleCommand command)
     {
         if (stopped) return false;
