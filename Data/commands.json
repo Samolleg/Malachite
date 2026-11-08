@@ -5067,6 +5067,30 @@
       "descriptor": "Fo",
       "note": "",
       "verification": "name_and_signature_verified_in_native_binary"
+    },
+    {
+      "name": "ZoneIceSync",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "ZoneIceSync()",
+      "descriptor": "",
+      "note": "Аддон AD22: согласовать 19 объектов льда gz6g и явный вариант графа. Повторный вызов не проверяет срок и не растапливает лёд; таяние разрешает только загрузчик при реальном входе. Требует Maps/zone6_normal.grp, Maps/zone6_ice.grp и подкрепление zone6_ice.mob из ICE02. Только новая игра.",
+      "verification": "addon_AD22_source"
+    },
+    {
+      "name": "ZoneIceFreeze",
+      "kind": "procedure",
+      "return_type": "void",
+      "parameters": [],
+      "special_form": false,
+      "trailing_command_body": false,
+      "signature": "ZoneIceFreeze()",
+      "descriptor": "",
+      "note": "Аддон AD22: вызвать при завершении квеста в bz2g. Только при ice.gz6g.state=0 сохраняет endDay=gtime/24+30, state=1 и z.gz6g.frozen=1. Повторный вызов не продлевает срок и не замораживает после таяния. Объекты до входа в gz6g не создаёт.",
+      "verification": "addon_AD22_source"
     }
   ]
 }
