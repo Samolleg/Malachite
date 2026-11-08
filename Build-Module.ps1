@@ -1,9 +1,17 @@
 param(
     [Parameter(Mandatory=$true)][string]$ModuleSdkDir,
     [Parameter(Mandatory=$true)][string]$PackageDirectory,
-    [string]$ScriptCheckRoot = (Join-Path $PSScriptRoot '../work/handoffs/x64scriptcheck01-r2/tools/ScriptCheck')
+    [string]$ScriptCheckRoot = ''
 )
 $ErrorActionPreference = 'Stop'
+$workspaceRoot = $PSScriptRoot
+while (!(Test-Path -LiteralPath (Join-Path $workspaceRoot 'RULES.md') -PathType Leaf)) {
+    $parent = Split-Path -Parent $workspaceRoot
+    if (!$parent -or $parent -eq $workspaceRoot) { throw 'Project RULES.md not found above worktree.' }
+    $workspaceRoot = $parent
+}
+
+if (!$ScriptCheckRoot) { $ScriptCheckRoot = Join-Path $workspaceRoot 'builds/scriptcheck/current' }
 $sdk = (Resolve-Path -LiteralPath $ModuleSdkDir).Path
 foreach ($name in @('ModuleContracts.V1.dll','ModuleContracts.Wpf.V1.dll')) {
     if (-not (Test-Path -LiteralPath (Join-Path $sdk $name))) { throw "SDK file missing: $name" }

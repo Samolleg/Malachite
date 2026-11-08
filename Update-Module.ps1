@@ -4,8 +4,15 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$editorRoot = Join-Path (Split-Path -Parent $PSScriptRoot) 'EvilIslands.DatabaseEditor'
-$sdk = Join-Path $editorRoot 'handoff/current'
+$workspaceRoot = $PSScriptRoot
+while (!(Test-Path -LiteralPath (Join-Path $workspaceRoot 'RULES.md') -PathType Leaf)) {
+    $parent = Split-Path -Parent $workspaceRoot
+    if (!$parent -or $parent -eq $workspaceRoot) { throw 'Project RULES.md not found above worktree.' }
+    $workspaceRoot = $parent
+}
+
+$editorRoot = Join-Path $workspaceRoot 'dbeditor'
+$sdk = Join-Path $workspaceRoot 'builds/dbeditor/current'
 $updater = Join-Path $editorRoot 'tools/Update-Malachite.ps1'
 if (-not $BuildOnly -and -not (Test-Path -LiteralPath $updater -PathType Leaf)) {
     throw "Host updater missing: $updater. Restore the host tooling before updating."
