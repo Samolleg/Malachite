@@ -43,7 +43,7 @@ public static class QuestAtlas
     public static RecordDto? QuestRecord(string root, WorkspaceSnapshot snapshot)
     {
         var name = QuestKey(root) ?? root;
-        var records = snapshot.Records.Where(r => r.Reference.TableKey == "quests.quests" && r.Name == name).ToArray();
+        var records = WorkspaceReferenceIndex.For(snapshot).Quests(name);
         if (records.Length != 1) return null;
         if (QuestRoot(root) == null) return records[0]; // Explicit QuestComplete DB identifier.
         var zones = records[0].Fields.Where(f => f.FieldId == 3 && f.NestedPath.IsEmpty).ToArray();

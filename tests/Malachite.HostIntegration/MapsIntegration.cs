@@ -16,7 +16,7 @@ internal static partial class Program
     {
         string sourceHash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(args[0])));
         string fixture = Path.GetFullPath(args[4]); bool warm = Directory.Exists(fixture);
-        string db = Path.Combine(fixture, "res", "database.res"), maps = Path.Combine(fixture, "Maps");
+        string db = Path.Combine(fixture, "res", "database" + Path.GetExtension(args[0])), maps = Path.Combine(fixture, "Maps");
         if (!warm)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(db)!); Directory.CreateDirectory(maps);

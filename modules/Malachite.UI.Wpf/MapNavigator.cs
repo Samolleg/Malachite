@@ -36,7 +36,7 @@ public static class MapNavigator
             if (matches.Count == 1 && matches[0].Groups[1].Value.Trim().Length > 0)
                 return matches[0].Groups[1].Value.Trim();
         }
-        return "Подпункт " + parts[3] + " · нет названия в texts.res";
+        return "Подпункт " + parts[3] + " · нет названия в связанных текстах";
     }
     public static NavigatorData Build(Analysis analysis, WorkspaceSnapshot snapshot, string path,
         IReadOnlyList<MobObject> objects, HelpService help, CommandRegistry registry)

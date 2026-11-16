@@ -29,8 +29,7 @@ public static class DatabaseReferences
             {
                 var key = Literal(analysis, argument);
                 if (key == null) return new("Квест · QuestComplete", "Ключ вычисляется во время игры. Статически определить запись нельзя.", []);
-                var records = snapshot.Records.Where(r => r.Reference.TableKey == "quests.quests" &&
-                    string.Equals(r.Name, key, StringComparison.Ordinal)).ToArray();
+                var records = WorkspaceReferenceIndex.For(snapshot).Quests(key);
                 return new("Квест: " + key, Status(records.Length, snapshot), records);
             }
         }
@@ -38,7 +37,7 @@ public static class DatabaseReferences
         if (token == null) return null;
         var literal = Literal(analysis, new(token.Start, token.Length));
         if (literal == null) return null;
-        var matches = snapshot.Records.Where(r => r.Texts.Any(t => t.ResourceKey == literal)).ToArray();
+        var matches = WorkspaceReferenceIndex.For(snapshot).Texts(literal);
         return matches.Length == 0 ? null : new("Текстовый ресурс: " + literal,
             "Точное совпадение ключа в связанных текстах БД. Само совпадение не доказывает, что эта функция читает текстовый ресурс.\n" + Status(matches.Length, snapshot), matches);
     }
