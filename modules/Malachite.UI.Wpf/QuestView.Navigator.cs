@@ -183,7 +183,7 @@ public partial class QuestView
             .Where(k => k != null).Cast<string>().Distinct(StringComparer.Ordinal).ToArray();
         foreach (string key in keys)
         {
-            panel.Children.Add(new TextBlock { Text = "КВЕСТ · texts.res", Foreground = MalachiteTheme.Accent, Margin = new(0, 12, 0, 6) });
+            panel.Children.Add(new TextBlock { Text = "КВЕСТ · связанные тексты", Foreground = MalachiteTheme.Accent, Margin = new(0, 12, 0, 6) });
             panel.Children.Add(AtlasNote(MapNavigator.QuestText(key, snapshot)));
         }
         string? next = keys.FirstOrDefault();

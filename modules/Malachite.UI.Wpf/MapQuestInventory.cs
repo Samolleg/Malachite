@@ -24,7 +24,7 @@ public static class MapQuestInventory
         var record = QuestAtlas.QuestRecord(quest, snapshot);
         if (record == null) return "Состояние без подтверждённого квеста БД";
         var texts = record.Texts.Where(t => t.ResourceKey.Equals("quest " + record.Name, StringComparison.Ordinal)).ToArray();
-        return texts.Length == 1 && !string.IsNullOrWhiteSpace(texts[0].Title) ? texts[0].Title : record.Name + " (нет названия в texts.res)";
+        return texts.Length == 1 && !string.IsNullOrWhiteSpace(texts[0].Title) ? texts[0].Title : record.Name + " (нет названия в связанных текстах)";
     }
 
     public static MapQuestItem[] Read(Analysis analysis, WorkspaceSnapshot snapshot, string path, bool includeBriefings)
@@ -100,7 +100,7 @@ public static class MapQuestInventory
                 return first with
                 {
                     Keys = rows.Select(q => q.Key).ToArray(),
-                    DisplayKey = first.Title == record.Name + " (нет названия в texts.res)" ? null : g.Count() > 1 ? record.Name : first.Key,
+                    DisplayKey = first.Title == record.Name + " (нет названия в связанных текстах)" ? null : g.Count() > 1 ? record.Name : first.Key,
                     Reason = evidence.Length > 0 ? EvidenceReason(evidence) : string.Join(" · ", g.Select(q => q.Reason).Distinct()),
                     Evidence = evidence,
                     Proof = string.Join("\n", g.Select(q => q.Proof).Distinct())
