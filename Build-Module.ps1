@@ -1,3 +1,5 @@
+#requires -Version 7.6.10
+#requires -PSEdition Core
 param(
     [Parameter(Mandatory=$true)][string]$ModuleSdkDir,
     [Parameter(Mandatory=$true)][string]$PackageDirectory,
