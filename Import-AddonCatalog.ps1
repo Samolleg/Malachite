@@ -1,3 +1,5 @@
+#requires -Version 7.6.10
+#requires -PSEdition Core
 param([Parameter(Mandatory=$true)][string]$SourceRoot)
 $ErrorActionPreference = 'Stop'
 $sourceFile = Join-Path $SourceRoot 'src/addon/NewScriptCommands.cpp'

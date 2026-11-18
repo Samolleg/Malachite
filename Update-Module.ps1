@@ -1,3 +1,5 @@
+#requires -Version 7.6.10
+#requires -PSEdition Core
 [CmdletBinding()]
 param(
     [switch]$BuildOnly
