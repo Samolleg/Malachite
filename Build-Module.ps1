@@ -31,9 +31,9 @@ $peOffset = [BitConverter]::ToInt32($compilerBytes,0x3c)
 if ($peOffset -lt 64 -or $peOffset -gt $compilerBytes.Length - 6 -or [BitConverter]::ToUInt32($compilerBytes,$peOffset) -ne 0x00004550 -or [BitConverter]::ToUInt16($compilerBytes,$peOffset + 4) -ne 0x8664) { throw 'ScriptCheck must be an x64 executable.' }
 $compilerHash = (Get-FileHash -LiteralPath $compilerExe).Hash
 if ($compilerManifest.sha256 -notmatch '^[0-9a-f]{64}$' -or $compilerHash -ne $compilerManifest.sha256) { throw 'ScriptCheck executable does not match delivery manifest.' }
-& (Join-Path $PSScriptRoot 'tools/invoke-build.ps1') dotnet.exe build (Join-Path $PSScriptRoot 'modules/Malachite.Module/Malachite.Module.csproj') -c Release "-p:ModuleSdkDir=$sdk" --nologo -v minimal -m:1 /nr:false /p:UseSharedCompilation=false
+& (Join-Path $PSScriptRoot 'tools/invoke-build.ps1') dotnet.exe build (Join-Path $PSScriptRoot 'modules/Malachite.Module/Malachite.Module.csproj') -c Release "-p:ModuleSdkDir=$sdk" --nologo -v minimal '/m:1'
 if ($LASTEXITCODE -ne 0) { throw 'Module build failed.' }
-$output = Join-Path $PSScriptRoot 'modules/Malachite.Module/bin/Release/net9.0-windows'
+$output = Join-Path $PSScriptRoot 'modules/Malachite.Module/bin/Release/net10.0-windows'
 $files = @('Malachite.Module.dll','Malachite.Module.deps.json','Malachite.UI.Wpf.dll','Malachite.Core.dll','module.json')
 foreach ($name in $files) { if (-not (Test-Path -LiteralPath (Join-Path $output $name))) { throw "Missing output: $name" } }
 New-Item -ItemType Directory -Path $destination | Out-Null
