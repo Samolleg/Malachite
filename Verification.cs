@@ -51,7 +51,9 @@ public static class Verification
         Directory.CreateDirectory(output);
         var stopwatch = Stopwatch.StartNew(); var registry = new CommandRegistry();
         var help = new HelpService(registry);
-        Require(registry.NativeCount == 214, "registry: 214 original native entries before addon overrides");
+        string[] extensions = ["PlayAnimationLoop", "StopAnimationLoop", "ZoneIceSync", "ZoneIceFreeze"];
+        Require(registry.NativeCount == 214 + extensions.Length && extensions.All(registry.Commands.ContainsKey),
+            "registry: original native entries and four project extensions before addon overrides");
         AddonVerification.Run(registry, help, Require, output);
         foreach (var voice in new[] { "CreateVoiceFX", "CreateVoiceFXWait" })
         {

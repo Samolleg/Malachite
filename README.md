@@ -43,11 +43,11 @@ Ctrl+O — открыть; Ctrl+F — поиск в обозревателе; Ct
 
 ## Разработка
 
-Собственный отдельный проект `EvilIslands.QuestStudio`, C# / WPF / net9.0-windows, без внешних NuGet-зависимостей. Реестр встроен в сборку; источник — корневой `Реестр_штатных_MOB_команд_ChatGPT.json` от 16.09.2026. `MobDocument.cs` следует действующему chunk-aware формату и алгоритму проектного инструмента `work/inventory_mob_scripts.py`. Native addon и Database Editor не изменялись.
+Собственный отдельный проект `EvilIslands.QuestStudio`, C# / WPF / net10.0-windows, без внешних NuGet-зависимостей. Реестр встроен в сборку; источник — корневой `Реестр_штатных_MOB_команд_ChatGPT.json` от 16.09.2026. `MobDocument.cs` следует действующему chunk-aware формату и алгоритму проектного инструмента `work/inventory_mob_scripts.py`. Native addon и Database Editor не изменялись.
 
 ```powershell
 dotnet build EvilIslands.QuestStudio.csproj -c Release
-dotnet bin/Release/net9.0-windows/Malachite.QuestStudio.dll --verify <evidence-directory> <optional-installed-Maps-directory>
+dotnet bin/Release/net10.0-windows/Malachite.QuestStudio.dll --verify <evidence-directory> <optional-installed-Maps-directory>
 ```
 
 Проверка не показывает окно: проверяет контейнеры, анализатор, проекты, WPF-обработчики и рисует интерфейс в PNG. Отчёт `report.json` отличает принятые файлы от явно отклонённых. Проверка реальной карты — только чтение, преобразования выполняются в памяти. Проверка реальными файлами не означает компиляции или запуска игры.
